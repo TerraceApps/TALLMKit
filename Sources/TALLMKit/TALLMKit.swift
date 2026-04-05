@@ -79,19 +79,11 @@ public final class TALLMKit: @unchecked Sendable {
     private func makeProvider(for config: ProviderConfig) -> any AIProvider {
         switch config {
         case .openAI(let key):
-            return OpenAICompatibleProvider(
-                baseURL: URL(string: "https://api.openai.com/v1")!,
-                apiKey: key,
-                httpClient: httpClient
-            )
+            return OpenAICompatibleProvider(variant: .openAI, apiKey: key, httpClient: httpClient)
         case .anthropic(let key):
             return AnthropicProvider(apiKey: key, httpClient: httpClient)
         case .grok(let key):
-            return OpenAICompatibleProvider(
-                baseURL: URL(string: "https://api.x.ai/v1")!,
-                apiKey: key,
-                httpClient: httpClient
-            )
+            return OpenAICompatibleProvider(variant: .grok, apiKey: key, httpClient: httpClient)
         case .gemini(let key):
             return GeminiProvider(apiKey: key, httpClient: httpClient)
         }

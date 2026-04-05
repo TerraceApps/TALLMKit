@@ -24,7 +24,7 @@ struct OpenAICompatibleProviderTests {
     func parsesResponseText() async throws {
         let mock = MockHTTPClient(data: Self.successJSON)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.openai.com/v1")!,
+            variant: .openAI,
             apiKey: "sk-test",
             httpClient: mock
         )
@@ -41,7 +41,7 @@ struct OpenAICompatibleProviderTests {
     func parsesUsage() async throws {
         let mock = MockHTTPClient(data: Self.successJSON)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.openai.com/v1")!,
+            variant: .openAI,
             apiKey: "sk-test",
             httpClient: mock
         )
@@ -61,7 +61,7 @@ struct OpenAICompatibleProviderTests {
     func sendsAuthHeader() async throws {
         let mock = MockHTTPClient(data: Self.successJSON)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.openai.com/v1")!,
+            variant: .openAI,
             apiKey: "sk-test-key",
             httpClient: mock
         )
@@ -73,7 +73,7 @@ struct OpenAICompatibleProviderTests {
     func sendsToCorrectEndpoint() async throws {
         let mock = MockHTTPClient(data: Self.successJSON)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.openai.com/v1")!,
+            variant: .openAI,
             apiKey: "sk-test",
             httpClient: mock
         )
@@ -85,7 +85,7 @@ struct OpenAICompatibleProviderTests {
     func usesGrokBaseURL() async throws {
         let mock = MockHTTPClient(data: Self.successJSON)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.x.ai/v1")!,
+            variant: .grok,
             apiKey: "xai-test",
             httpClient: mock
         )
@@ -99,7 +99,7 @@ struct OpenAICompatibleProviderTests {
     func throwsInvalidAPIKeyOn401() async throws {
         let mock = MockHTTPClient(data: Data(), statusCode: 401)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.openai.com/v1")!,
+            variant: .openAI,
             apiKey: "bad-key",
             httpClient: mock
         )
@@ -115,7 +115,7 @@ struct OpenAICompatibleProviderTests {
     func throwsRateLimitedOn429() async throws {
         let mock = MockHTTPClient(data: Data(), statusCode: 429)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.openai.com/v1")!,
+            variant: .openAI,
             apiKey: "sk-test",
             httpClient: mock
         )
@@ -132,7 +132,7 @@ struct OpenAICompatibleProviderTests {
         let body = "Internal Server Error".data(using: .utf8)!
         let mock = MockHTTPClient(data: body, statusCode: 500)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.openai.com/v1")!,
+            variant: .openAI,
             apiKey: "sk-test",
             httpClient: mock
         )
@@ -149,7 +149,7 @@ struct OpenAICompatibleProviderTests {
         let mock = MockHTTPClient()
         mock.stubbedError = URLError(.notConnectedToInternet)
         let provider = OpenAICompatibleProvider(
-            baseURL: URL(string: "https://api.openai.com/v1")!,
+            variant: .openAI,
             apiKey: "sk-test",
             httpClient: mock
         )

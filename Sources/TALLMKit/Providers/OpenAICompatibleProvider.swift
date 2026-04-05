@@ -1,13 +1,25 @@
 // Sources/TALLMKit/Providers/OpenAICompatibleProvider.swift
 import Foundation
 
+enum OpenAIVariant: Sendable {
+    case openAI
+    case grok
+
+    var baseURL: URL {
+        switch self {
+        case .openAI: return URL(string: "https://api.openai.com/v1")!
+        case .grok:   return URL(string: "https://api.x.ai/v1")!
+        }
+    }
+}
+
 final class OpenAICompatibleProvider: AIProvider, Sendable {
     private let baseURL: URL
     private let apiKey: String
     private let httpClient: any HTTPClientProtocol
 
-    init(baseURL: URL, apiKey: String, httpClient: any HTTPClientProtocol) {
-        self.baseURL = baseURL
+    init(variant: OpenAIVariant, apiKey: String, httpClient: any HTTPClientProtocol) {
+        self.baseURL = variant.baseURL
         self.apiKey = apiKey
         self.httpClient = httpClient
     }
