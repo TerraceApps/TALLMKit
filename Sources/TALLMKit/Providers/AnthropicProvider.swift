@@ -2,7 +2,6 @@
 import Foundation
 
 final class AnthropicProvider: AIProvider, Sendable {
-    private static let baseURL = "https://api.anthropic.com/v1/messages"
     private let apiKey: String
     private let httpClient: any HTTPClient
 
@@ -16,13 +15,7 @@ final class AnthropicProvider: AIProvider, Sendable {
         messages: [Message],
         parameters: RequestParameters
     ) async throws -> AIResponse {
-        let endpoint = try Endpoint.builder()
-            .baseURL(Self.baseURL)
-            .contentTypeJSON()
-            .header(HTTPHeader.Name.apiKey, value: apiKey)
-            .header(HTTPHeader.Name.anthropicVersion, value: "2023-06-01")
-            .build()
-        var request = endpoint.urlRequest()
+        var request = try Endpoints.Anthropic(apiKey: apiKey).urlRequest()
 
         // Anthropic requires system messages in a separate top-level field
         var systemContent = messages

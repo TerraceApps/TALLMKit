@@ -1,14 +1,15 @@
-// Sources/TALLMKit/Networking/HTTPClient.swift
 import Foundation
 
-protocol HTTPClientProtocol: Sendable {
+protocol HTTPClient: Sendable {
     func perform(_ request: URLRequest) async throws -> (Data, HTTPURLResponse)
 }
 
-final class HTTPClient: HTTPClientProtocol, Sendable {
+final class HTTPClientImpl: HTTPClient, Sendable {
     private let session: URLSession
 
-    init(session: URLSession = .shared) {
+    init(
+        session: URLSession = .shared
+    ) {
         self.session = session
     }
 

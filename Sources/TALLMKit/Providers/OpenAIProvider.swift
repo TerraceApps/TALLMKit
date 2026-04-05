@@ -2,7 +2,6 @@
 import Foundation
 
 final class OpenAIProvider: AIProvider, Sendable {
-    private static let baseURL = "https://api.openai.com/v1"
     private let apiKey: String
     private let httpClient: any HTTPClient
 
@@ -16,13 +15,7 @@ final class OpenAIProvider: AIProvider, Sendable {
         messages: [Message],
         parameters: RequestParameters
     ) async throws -> AIResponse {
-        let endpoint = try Endpoint.builder()
-            .baseURL(Self.baseURL)
-            .path("chat/completions")
-            .contentTypeJSON()
-            .bearerAuth(apiKey)
-            .build()
-        var request = endpoint.urlRequest()
+        var request = try Endpoints.OpenAI(apiKey: apiKey).urlRequest()
 
         let encodedMessages = messages.map { msg in
             OAIRequest.Msg(role: msg.role.rawValue, content: msg.content, toolCallId: msg.toolCallId)

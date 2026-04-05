@@ -2,7 +2,6 @@
 import Foundation
 
 final class GeminiProvider: AIProvider, Sendable {
-    private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models"
     private let apiKey: String
     private let httpClient: any HTTPClient
 
@@ -16,13 +15,7 @@ final class GeminiProvider: AIProvider, Sendable {
         messages: [Message],
         parameters: RequestParameters
     ) async throws -> AIResponse {
-        let endpoint = try Endpoint.builder()
-            .baseURL(Self.baseURL)
-            .path("\(model):generateContent")
-            .queryItem("key", value: apiKey)
-            .contentTypeJSON()
-            .build()
-        var request = endpoint.urlRequest()
+        var request = try Endpoints.Gemini(apiKey: apiKey, model: model).urlRequest()
 
         // System messages go to systemInstruction; others become contents
         let systemText = messages
