@@ -49,7 +49,7 @@ struct ToolCallingTests {
         @Test("Encodes tools in request body")
         func encodesToolsInRequest() async throws {
             let mock = MockHTTPClient(data: Self.textResponseJSON)
-            let provider = OpenAICompatibleProvider(variant: .openAI, apiKey: "sk-test", httpClient: mock)
+            let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
             var params = RequestParameters.default
             params.tools = [ToolCallingTests.weatherTool]
             _ = try await provider.chat(model: "gpt-4o-mini", messages: [.user("Weather?")], parameters: params)
@@ -66,7 +66,7 @@ struct ToolCallingTests {
         @Test("Decodes tool calls from response")
         func decodesToolCallsFromResponse() async throws {
             let mock = MockHTTPClient(data: Self.toolCallResponseJSON)
-            let provider = OpenAICompatibleProvider(variant: .openAI, apiKey: "sk-test", httpClient: mock)
+            let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
             let response = try await provider.chat(model: "gpt-4o-mini", messages: [.user("Weather?")], parameters: .default)
             #expect(response.toolCalls != nil)
             #expect(response.toolCalls?.count == 1)
@@ -78,7 +78,7 @@ struct ToolCallingTests {
         @Test("Encodes tool result message with tool_call_id")
         func encodesToolResultMessage() async throws {
             let mock = MockHTTPClient(data: Self.textResponseJSON)
-            let provider = OpenAICompatibleProvider(variant: .openAI, apiKey: "sk-test", httpClient: mock)
+            let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
             let messages: [Message] = [
                 .user("Weather in Paris?"),
                 .toolResult(toolCallId: "call_abc123", content: "{\"temp\": 22}")
@@ -95,7 +95,7 @@ struct ToolCallingTests {
         @Test("Adds response_format json_object when jsonMode is true")
         func addsJsonResponseFormat() async throws {
             let mock = MockHTTPClient(data: Self.textResponseJSON)
-            let provider = OpenAICompatibleProvider(variant: .openAI, apiKey: "sk-test", httpClient: mock)
+            let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
             var params = RequestParameters.default
             params.jsonMode = true
             _ = try await provider.chat(model: "gpt-4o-mini", messages: [.user("Give JSON")], parameters: params)

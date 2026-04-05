@@ -4,9 +4,9 @@ import Foundation
 final class AnthropicProvider: AIProvider, Sendable {
     private static let baseURL = URL(string: "https://api.anthropic.com/v1/messages")!
     private let apiKey: String
-    private let httpClient: any HTTPClientProtocol
+    private let httpClient: any HTTPClient
 
-    init(apiKey: String, httpClient: any HTTPClientProtocol) {
+    init(apiKey: String, httpClient: any HTTPClient) {
         self.apiKey = apiKey
         self.httpClient = httpClient
     }

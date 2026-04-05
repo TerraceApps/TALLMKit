@@ -4,9 +4,9 @@ import Foundation
 final class GeminiProvider: AIProvider, Sendable {
     private static let baseURLString = "https://generativelanguage.googleapis.com/v1beta/models"
     private let apiKey: String
-    private let httpClient: any HTTPClientProtocol
+    private let httpClient: any HTTPClient
 
-    init(apiKey: String, httpClient: any HTTPClientProtocol) {
+    init(apiKey: String, httpClient: any HTTPClient) {
         self.apiKey = apiKey
         self.httpClient = httpClient
     }

@@ -3,7 +3,7 @@ import Foundation
 @testable import TALLMKit
 
 /// A test double that captures the outgoing URLRequest and returns configurable data.
-final class MockHTTPClient: HTTPClientProtocol, @unchecked Sendable {
+final class MockHTTPClient: HTTPClient, @unchecked Sendable {
     private(set) var capturedRequest: URLRequest?
     var responseData: Data
     var statusCode: Int

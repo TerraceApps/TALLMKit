@@ -3,106 +3,62 @@ import Testing
 import Foundation
 @testable import TALLMKit
 
-@Suite("OpenAICompatibleProvider")
-struct OpenAICompatibleProviderTests {
+// MARK: – Shared fixture
 
-    // MARK: – Fixtures
+private let successJSON = """
+{
+  "id": "chatcmpl-abc",
+  "choices": [{
+    "message": { "role": "assistant", "content": "Hello there!" }
+  }],
+  "usage": { "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15 }
+}
+""".data(using: .utf8)!
 
-    static let successJSON = """
-    {
-      "id": "chatcmpl-abc",
-      "choices": [{
-        "message": { "role": "assistant", "content": "Hello there!" }
-      }],
-      "usage": { "prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15 }
-    }
-    """.data(using: .utf8)!
+// MARK: – OpenAIProvider
 
-    // MARK: – Response parsing
+@Suite("OpenAIProvider")
+struct OpenAIProviderTests {
 
     @Test("Parses text from choices[0].message.content")
     func parsesResponseText() async throws {
-        let mock = MockHTTPClient(data: Self.successJSON)
-        let provider = OpenAICompatibleProvider(
-            variant: .openAI,
-            apiKey: "sk-test",
-            httpClient: mock
-        )
-        let response = try await provider.chat(
-            model: "gpt-4o-mini",
-            messages: [.user("Hi")],
-            parameters: .default
-        )
+        let mock = MockHTTPClient(data: successJSON)
+        let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
+        let response = try await provider.chat(model: "gpt-4o-mini", messages: [.user("Hi")], parameters: .default)
         #expect(response.text == "Hello there!")
         #expect(response.model == "gpt-4o-mini")
     }
 
     @Test("Parses token usage")
     func parsesUsage() async throws {
-        let mock = MockHTTPClient(data: Self.successJSON)
-        let provider = OpenAICompatibleProvider(
-            variant: .openAI,
-            apiKey: "sk-test",
-            httpClient: mock
-        )
-        let response = try await provider.chat(
-            model: "gpt-4o-mini",
-            messages: [.user("Hi")],
-            parameters: .default
-        )
+        let mock = MockHTTPClient(data: successJSON)
+        let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
+        let response = try await provider.chat(model: "gpt-4o-mini", messages: [.user("Hi")], parameters: .default)
         #expect(response.usage?.inputTokens == 10)
         #expect(response.usage?.outputTokens == 5)
         #expect(response.usage?.totalTokens == 15)
     }
 
-    // MARK: – Request building
-
     @Test("Sends Authorization: Bearer header")
     func sendsAuthHeader() async throws {
-        let mock = MockHTTPClient(data: Self.successJSON)
-        let provider = OpenAICompatibleProvider(
-            variant: .openAI,
-            apiKey: "sk-test-key",
-            httpClient: mock
-        )
+        let mock = MockHTTPClient(data: successJSON)
+        let provider = OpenAIProvider(apiKey: "sk-test-key", httpClient: mock)
         _ = try await provider.chat(model: "gpt-4o-mini", messages: [.user("Hi")], parameters: .default)
         #expect(mock.capturedRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer sk-test-key")
     }
 
-    @Test("Sends request to /chat/completions")
+    @Test("Sends request to https://api.openai.com/v1/chat/completions")
     func sendsToCorrectEndpoint() async throws {
-        let mock = MockHTTPClient(data: Self.successJSON)
-        let provider = OpenAICompatibleProvider(
-            variant: .openAI,
-            apiKey: "sk-test",
-            httpClient: mock
-        )
+        let mock = MockHTTPClient(data: successJSON)
+        let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
         _ = try await provider.chat(model: "gpt-4o-mini", messages: [.user("Hi")], parameters: .default)
         #expect(mock.capturedRequest?.url?.absoluteString == "https://api.openai.com/v1/chat/completions")
     }
 
-    @Test("Uses Grok base URL when configured for Grok")
-    func usesGrokBaseURL() async throws {
-        let mock = MockHTTPClient(data: Self.successJSON)
-        let provider = OpenAICompatibleProvider(
-            variant: .grok,
-            apiKey: "xai-test",
-            httpClient: mock
-        )
-        _ = try await provider.chat(model: "grok-3", messages: [.user("Hi")], parameters: .default)
-        #expect(mock.capturedRequest?.url?.absoluteString == "https://api.x.ai/v1/chat/completions")
-    }
-
-    // MARK: – Error handling
-
     @Test("Throws invalidAPIKey on 401")
     func throwsInvalidAPIKeyOn401() async throws {
         let mock = MockHTTPClient(data: Data(), statusCode: 401)
-        let provider = OpenAICompatibleProvider(
-            variant: .openAI,
-            apiKey: "bad-key",
-            httpClient: mock
-        )
+        let provider = OpenAIProvider(apiKey: "bad-key", httpClient: mock)
         await #expect {
             try await provider.chat(model: "gpt-4o-mini", messages: [.user("Hi")], parameters: .default)
         } throws: { error in
@@ -114,11 +70,7 @@ struct OpenAICompatibleProviderTests {
     @Test("Throws rateLimited on 429")
     func throwsRateLimitedOn429() async throws {
         let mock = MockHTTPClient(data: Data(), statusCode: 429)
-        let provider = OpenAICompatibleProvider(
-            variant: .openAI,
-            apiKey: "sk-test",
-            httpClient: mock
-        )
+        let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
         await #expect {
             try await provider.chat(model: "gpt-4o-mini", messages: [.user("Hi")], parameters: .default)
         } throws: { error in
@@ -129,13 +81,8 @@ struct OpenAICompatibleProviderTests {
 
     @Test("Throws httpError on 500")
     func throwsHttpErrorOn500() async throws {
-        let body = "Internal Server Error".data(using: .utf8)!
-        let mock = MockHTTPClient(data: body, statusCode: 500)
-        let provider = OpenAICompatibleProvider(
-            variant: .openAI,
-            apiKey: "sk-test",
-            httpClient: mock
-        )
+        let mock = MockHTTPClient(data: "Internal Server Error".data(using: .utf8)!, statusCode: 500)
+        let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
         await #expect {
             try await provider.chat(model: "gpt-4o-mini", messages: [.user("Hi")], parameters: .default)
         } throws: { error in
@@ -148,15 +95,53 @@ struct OpenAICompatibleProviderTests {
     func throwsNetworkError() async throws {
         let mock = MockHTTPClient()
         mock.stubbedError = URLError(.notConnectedToInternet)
-        let provider = OpenAICompatibleProvider(
-            variant: .openAI,
-            apiKey: "sk-test",
-            httpClient: mock
-        )
+        let provider = OpenAIProvider(apiKey: "sk-test", httpClient: mock)
         await #expect {
             try await provider.chat(model: "gpt-4o-mini", messages: [.user("Hi")], parameters: .default)
         } throws: { error in
             guard let e = error as? AIError, case .networkError = e else { return false }
+            return true
+        }
+    }
+}
+
+// MARK: – GrokProvider
+
+@Suite("GrokProvider")
+struct GrokProviderTests {
+
+    @Test("Sends request to https://api.x.ai/v1/chat/completions")
+    func sendsToGrokEndpoint() async throws {
+        let mock = MockHTTPClient(data: successJSON)
+        let provider = GrokProvider(apiKey: "xai-test", httpClient: mock)
+        _ = try await provider.chat(model: "grok-3", messages: [.user("Hi")], parameters: .default)
+        #expect(mock.capturedRequest?.url?.absoluteString == "https://api.x.ai/v1/chat/completions")
+    }
+
+    @Test("Sends Authorization: Bearer header")
+    func sendsAuthHeader() async throws {
+        let mock = MockHTTPClient(data: successJSON)
+        let provider = GrokProvider(apiKey: "xai-key", httpClient: mock)
+        _ = try await provider.chat(model: "grok-3", messages: [.user("Hi")], parameters: .default)
+        #expect(mock.capturedRequest?.value(forHTTPHeaderField: "Authorization") == "Bearer xai-key")
+    }
+
+    @Test("Parses text response")
+    func parsesResponseText() async throws {
+        let mock = MockHTTPClient(data: successJSON)
+        let provider = GrokProvider(apiKey: "xai-test", httpClient: mock)
+        let response = try await provider.chat(model: "grok-3", messages: [.user("Hi")], parameters: .default)
+        #expect(response.text == "Hello there!")
+    }
+
+    @Test("Throws invalidAPIKey on 401")
+    func throwsInvalidAPIKeyOn401() async throws {
+        let mock = MockHTTPClient(data: Data(), statusCode: 401)
+        let provider = GrokProvider(apiKey: "bad-key", httpClient: mock)
+        await #expect {
+            try await provider.chat(model: "grok-3", messages: [.user("Hi")], parameters: .default)
+        } throws: { error in
+            guard let e = error as? AIError, case .invalidAPIKey = e else { return false }
             return true
         }
     }
