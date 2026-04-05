@@ -74,6 +74,50 @@ public final class TALLMKit: @unchecked Sendable {
         return try await provider.chat(model: model.modelId, messages: messages, parameters: parameters)
     }
 
+    /// Send a single message and decode the JSON response into a `Decodable` type.
+    ///
+    /// Automatically sets `jsonMode = true` on the parameters before calling the provider.
+    public func send<T: Decodable & Sendable>(
+        _ message: String,
+        model: Model,
+        parameters: RequestParameters = .default,
+        decoding: T.Type
+    ) async throws -> TypedResponse<T> {
+        var p = parameters
+        p.jsonMode = true
+        var messages: [Message] = []
+        if let systemPrompt = p.systemPrompt {
+            messages.append(.system(systemPrompt))
+        }
+        messages.append(.user(message))
+        return try await chat(model, messages: messages, parameters: p, decoding: decoding)
+    }
+
+    /// Send a full conversation and decode the JSON response into a `Decodable` type.
+    ///
+    /// Automatically sets `jsonMode = true` on the parameters before calling the provider.
+    public func chat<T: Decodable & Sendable>(
+        _ model: Model,
+        messages: [Message],
+        parameters: RequestParameters = .default,
+        decoding: T.Type
+    ) async throws -> TypedResponse<T> {
+        var p = parameters
+        p.jsonMode = true
+        let response = try await chat(model, messages: messages, parameters: p)
+        guard !response.text.isEmpty else {
+            throw AIError.decodingError(
+                DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Empty response text"))
+            )
+        }
+        do {
+            let value = try JSONDecoder().decode(T.self, from: Data(response.text.utf8))
+            return TypedResponse(value: value, usage: response.usage)
+        } catch {
+            throw AIError.decodingError(error)
+        }
+    }
+
     // MARK: – Private
 
     private func makeProvider(for config: ProviderConfig) -> any AIProvider {
