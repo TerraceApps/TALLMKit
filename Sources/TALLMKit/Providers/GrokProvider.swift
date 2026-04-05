@@ -18,9 +18,9 @@ final class GrokProvider: AIProvider, Sendable {
     ) async throws -> AIResponse {
         let url = Self.baseURL.appendingPathComponent("chat/completions")
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.httpMethod = HTTPMethod.post.rawValue
+        request.setValue(HTTPHeader.Value.applicationJSON, forHTTPHeaderField: HTTPHeader.Name.contentType)
+        request.setValue(HTTPHeader.Value.bearer(apiKey), forHTTPHeaderField: HTTPHeader.Name.authorization)
 
         let encodedMessages = messages.map { msg in
             GrokRequest.Msg(role: msg.role.rawValue, content: msg.content, toolCallId: msg.toolCallId)

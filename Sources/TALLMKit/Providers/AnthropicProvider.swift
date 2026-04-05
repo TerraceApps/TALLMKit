@@ -17,10 +17,10 @@ final class AnthropicProvider: AIProvider, Sendable {
         parameters: RequestParameters
     ) async throws -> AIResponse {
         var request = URLRequest(url: Self.baseURL)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+        request.httpMethod = HTTPMethod.post.rawValue
+        request.setValue(HTTPHeader.Value.applicationJSON, forHTTPHeaderField: HTTPHeader.Name.contentType)
+        request.setValue(apiKey, forHTTPHeaderField: HTTPHeader.Name.apiKey)
+        request.setValue("2023-06-01", forHTTPHeaderField: HTTPHeader.Name.anthropicVersion)
 
         // Anthropic requires system messages in a separate top-level field
         var systemContent = messages

@@ -22,8 +22,8 @@ final class GeminiProvider: AIProvider, Sendable {
         }
 
         var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpMethod = HTTPMethod.post.rawValue
+        request.setValue(HTTPHeader.Value.applicationJSON, forHTTPHeaderField: HTTPHeader.Name.contentType)
 
         // System messages go to systemInstruction; others become contents
         let systemText = messages
