@@ -23,19 +23,52 @@ final class AnthropicProvider: AIProvider, Sendable {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
         // Anthropic requires system messages in a separate top-level field
-        let systemContent = messages
+        var systemContent = messages
             .filter { $0.role == .system }
             .map(\.content)
             .joined(separator: "\n")
-        let chatMessages = messages.filter { $0.role != .system }
+
+        // jsonMode: prepend instruction to system prompt
+        if parameters.jsonMode {
+            let jsonInstruction = "Respond with valid JSON only, no other text."
+            systemContent = systemContent.isEmpty ? jsonInstruction : "\(jsonInstruction)\n\(systemContent)"
+        }
+
+        // Build content blocks per message
+        let chatMessages: [AnthropicRequest.Msg] = messages
+            .filter { $0.role != .system }
+            .map { msg in
+                if msg.role == .tool, let tcid = msg.toolCallId {
+                    // Tool result: user message with tool_result content block
+                    let block = AnthropicRequest.ContentBlock.toolResult(
+                        toolUseId: tcid, content: msg.content
+                    )
+                    return AnthropicRequest.Msg(role: "user", content: .blocks([block]))
+                } else {
+                    return AnthropicRequest.Msg(role: msg.role.rawValue, content: .text(msg.content))
+                }
+            }
+
+        // Encode tools if present
+        let encodedTools: [AnthropicRequest.AnthropicTool]? = parameters.tools.flatMap { tools in
+            tools.isEmpty ? nil : tools.map { tool in
+                let schema = (try? JSONSerialization.jsonObject(with: Data(tool.parametersSchema.utf8))) as? [String: Any]
+                return AnthropicRequest.AnthropicTool(
+                    name: tool.name,
+                    description: tool.description,
+                    inputSchema: schema ?? [:]
+                )
+            }
+        }
 
         let body = AnthropicRequest(
             model: model,
-            messages: chatMessages.map { AnthropicRequest.Msg(role: $0.role.rawValue, content: $0.content) },
+            messages: chatMessages,
             system: systemContent.isEmpty ? nil : systemContent,
             maxTokens: parameters.maxTokens ?? 1024,
             temperature: parameters.temperature,
-            topP: parameters.topP
+            topP: parameters.topP,
+            tools: encodedTools
         )
         request.httpBody = try JSONEncoder().encode(body)
 
@@ -54,21 +87,43 @@ final class AnthropicProvider: AIProvider, Sendable {
 
         do {
             let decoded = try JSONDecoder().decode(AnthropicResponse.self, from: data)
+
             let text = decoded.content
                 .filter { $0.type == "text" }
                 .compactMap(\.text)
                 .joined()
-            guard !text.isEmpty else {
+
+            // Decode tool_use blocks
+            let toolCalls: [ToolCall]? = {
+                let calls = decoded.content
+                    .filter { $0.type == "tool_use" }
+                    .compactMap { block -> ToolCall? in
+                        guard let id = block.id, let name = block.name else { return nil }
+                        let args: String
+                        if let inputData = try? JSONSerialization.data(withJSONObject: block.input ?? [:]),
+                           let inputStr = String(data: inputData, encoding: .utf8) {
+                            args = inputStr
+                        } else {
+                            args = "{}"
+                        }
+                        return ToolCall(id: id, name: name, arguments: args)
+                    }
+                return calls.isEmpty ? nil : calls
+            }()
+
+            // For tool_use responses, text may be empty — that's valid
+            if text.isEmpty && toolCalls == nil {
                 throw AIError.decodingError(DecodingError.dataCorrupted(
                     .init(codingPath: [], debugDescription: "No text content in response")
                 ))
             }
+
             let usage = AIResponse.TokenUsage(
                 inputTokens: decoded.usage.inputTokens,
                 outputTokens: decoded.usage.outputTokens,
                 totalTokens: decoded.usage.inputTokens + decoded.usage.outputTokens
             )
-            return AIResponse(text: text, model: model, usage: usage)
+            return AIResponse(text: text, model: model, usage: usage, toolCalls: toolCalls)
         } catch let error as AIError {
             throw error
         } catch {
@@ -80,9 +135,63 @@ final class AnthropicProvider: AIProvider, Sendable {
 // MARK: – Wire types
 
 private struct AnthropicRequest: Encodable {
+    enum ContentBlock {
+        case toolResult(toolUseId: String, content: String)
+    }
+
+    enum MessageContent: Encodable {
+        case text(String)
+        case blocks([ContentBlock])
+
+        func encode(to encoder: Encoder) throws {
+            switch self {
+            case .text(let s):
+                var c = encoder.singleValueContainer()
+                try c.encode(s)
+            case .blocks(let blocks):
+                var c = encoder.unkeyedContainer()
+                for block in blocks {
+                    switch block {
+                    case .toolResult(let id, let content):
+                        var bc = c.nestedContainer(keyedBy: ToolResultKeys.self)
+                        try bc.encode("tool_result", forKey: .type)
+                        try bc.encode(id, forKey: .toolUseId)
+                        try bc.encode(content, forKey: .content)
+                    }
+                }
+            }
+        }
+
+        enum ToolResultKeys: String, CodingKey {
+            case type
+            case toolUseId = "tool_use_id"
+            case content
+        }
+    }
+
     struct Msg: Encodable {
         let role: String
-        let content: String
+        let content: MessageContent
+    }
+
+    struct AnthropicTool: Encodable {
+        let name: String
+        let description: String
+        let inputSchema: [String: Any]
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(name, forKey: .name)
+            try c.encode(description, forKey: .description)
+            let data = try JSONSerialization.data(withJSONObject: inputSchema)
+            let raw = try JSONDecoder().decode(RawJSON.self, from: data)
+            try c.encode(raw, forKey: .inputSchema)
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case name, description
+            case inputSchema = "input_schema"
+        }
     }
 
     let model: String
@@ -91,9 +200,10 @@ private struct AnthropicRequest: Encodable {
     let maxTokens: Int
     let temperature: Double?
     let topP: Double?
+    let tools: [AnthropicTool]?
 
     enum CodingKeys: String, CodingKey {
-        case model, messages, system, temperature
+        case model, messages, system, temperature, tools
         case maxTokens = "max_tokens"
         case topP = "top_p"
     }
@@ -103,6 +213,25 @@ private struct AnthropicResponse: Decodable {
     struct ContentBlock: Decodable {
         let type: String
         let text: String?
+        // tool_use fields
+        let id: String?
+        let name: String?
+        let input: [String: Any]?
+
+        enum CodingKeys: String, CodingKey { case type, text, id, name, input }
+
+        init(from decoder: Decoder) throws {
+            let c = try decoder.container(keyedBy: CodingKeys.self)
+            type = try c.decode(String.self, forKey: .type)
+            text = try c.decodeIfPresent(String.self, forKey: .text)
+            id = try c.decodeIfPresent(String.self, forKey: .id)
+            name = try c.decodeIfPresent(String.self, forKey: .name)
+            if let raw = try? c.decode(RawJSON.self, forKey: .input) {
+                input = raw.value as? [String: Any]
+            } else {
+                input = nil
+            }
+        }
     }
 
     struct Usage: Decodable {
@@ -117,4 +246,40 @@ private struct AnthropicResponse: Decodable {
 
     let content: [ContentBlock]
     let usage: Usage
+}
+
+// MARK: – RawJSON helper
+
+private struct RawJSON: Codable {
+    let value: Any
+
+    init(_ value: Any) { self.value = value }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if let d = try? c.decode([String: RawJSON].self) { value = d.mapValues(\.value) }
+        else if let a = try? c.decode([RawJSON].self) { value = a.map(\.value) }
+        else if let s = try? c.decode(String.self) { value = s }
+        else if let n = try? c.decode(Double.self) { value = n }
+        else if let b = try? c.decode(Bool.self) { value = b }
+        else { value = NSNull() }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch value {
+        case let d as [String: Any]:
+            try c.encode(d.mapValues { RawJSON($0) })
+        case let a as [Any]:
+            try c.encode(a.map { RawJSON($0) })
+        case let s as String:
+            try c.encode(s)
+        case let n as Double:
+            try c.encode(n)
+        case let b as Bool:
+            try c.encode(b)
+        default:
+            try c.encodeNil()
+        }
+    }
 }
