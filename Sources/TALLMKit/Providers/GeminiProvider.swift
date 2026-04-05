@@ -2,7 +2,7 @@
 import Foundation
 
 final class GeminiProvider: AIProvider, Sendable {
-    private static let baseURLString = "https://generativelanguage.googleapis.com/v1beta/models"
+    private static let baseURL = "https://generativelanguage.googleapis.com/v1beta/models"
     private let apiKey: String
     private let httpClient: any HTTPClient
 
@@ -16,14 +16,13 @@ final class GeminiProvider: AIProvider, Sendable {
         messages: [Message],
         parameters: RequestParameters
     ) async throws -> AIResponse {
-        let urlString = "\(Self.baseURLString)/\(model):generateContent?key=\(apiKey)"
-        guard let url = URL(string: urlString) else {
-            throw AIError.httpError(status: 0, body: "Invalid URL for model \(model)")
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = HTTPMethod.post.rawValue
-        request.setValue(HTTPHeader.Value.applicationJSON, forHTTPHeaderField: HTTPHeader.Name.contentType)
+        let endpoint = try Endpoint.builder()
+            .baseURL(Self.baseURL)
+            .path("\(model):generateContent")
+            .queryItem("key", value: apiKey)
+            .contentTypeJSON()
+            .build()
+        var request = endpoint.urlRequest()
 
         // System messages go to systemInstruction; others become contents
         let systemText = messages
