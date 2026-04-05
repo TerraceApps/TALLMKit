@@ -14,9 +14,13 @@ public final class TALLMKit: @unchecked Sendable {
     private var _providers: [ProviderType: any AIProvider] = [:]
     private let httpClient: any HTTPClientProtocol
 
-    /// - Parameter httpClient: Override for testing. Defaults to URLSession.shared.
-    public init(httpClient: (any HTTPClientProtocol)? = nil) {
-        self.httpClient = httpClient ?? HTTPClient()
+    public init() {
+        self.httpClient = HTTPClient()
+    }
+
+    /// Test-only initialiser; accessible via `@testable import TALLMKit`.
+    init(httpClient: any HTTPClientProtocol) {
+        self.httpClient = httpClient
     }
 
     // MARK: – Configuration
