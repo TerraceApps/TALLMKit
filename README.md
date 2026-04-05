@@ -113,7 +113,50 @@ if let usage = response.usage {
 }
 ```
 
-### 7. Error handling
+### 7. Tool calling
+
+```swift
+let weatherTool = Tool(
+    name: "get_weather",
+    description: "Get current temperature for a city",
+    parametersSchema: """
+    {"type":"object","properties":{"city":{"type":"string"}},"required":["city"]}
+    """
+)
+var params = RequestParameters()
+params.tools = [weatherTool]
+let response = try await sdk.send("What's the weather in Paris?",
+                                   model: .openAI(.gpt4oMini),
+                                   parameters: params)
+if let calls = response.toolCalls {
+    // Execute tool locally, then send result back
+    let result = try await sdk.chat(.openAI(.gpt4oMini), messages: [
+        .user("What's the weather in Paris?"),
+        .assistant(response.text),
+        .toolResult(toolCallId: calls[0].id, content: "{\"temp\": 22, \"unit\": \"C\"}")
+    ])
+    print(result.text)
+}
+```
+
+### 8. Typed JSON decoding
+
+```swift
+struct WeatherInfo: Decodable, Sendable {
+    let city: String
+    let temperature: Double
+    let condition: String
+}
+let result = try await sdk.chat(
+    .openAI(.gpt4oMini),
+    messages: [.user("Give me Paris weather as JSON")],
+    decoding: WeatherInfo.self
+)
+print(result.value.temperature) // Double
+print(result.usage?.totalTokens) // Optional<Int>
+```
+
+### 9. Error handling
 
 ```swift
 let sdk = TALLMKit()
@@ -137,3 +180,19 @@ do {
     print("Unexpected error: \(error)")
 }
 ```
+
+---
+
+## Example App
+
+A runnable SwiftUI iOS app lives in `Examples/TALLMKitExample/`.
+
+**To open and run:**
+
+1. Open `Examples/TALLMKitExample/TALLMKitExample.xcodeproj` in Xcode.
+2. Select an iOS simulator (iOS 17+).
+3. Press **⌘R** to build and run.
+4. In the **Chat** tab: pick a provider, enter your API key, type a prompt, tap Send.
+5. In the **Tool Demo** tab: enter your API key and tap **Run Tool Demo** to see tool calling in action.
+
+The example app references TALLMKit as a local Swift package — no additional setup required.
