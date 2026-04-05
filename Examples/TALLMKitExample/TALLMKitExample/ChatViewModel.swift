@@ -11,6 +11,7 @@ enum ProviderOption: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+@MainActor
 @Observable
 final class ChatViewModel {
     var selectedProvider: ProviderOption = .openAI
@@ -40,7 +41,7 @@ final class ChatViewModel {
         response = ""
         usageText = ""
 
-        Task { @MainActor in
+        Task {
             defer { isLoading = false }
             do {
                 let sdk = TALLMKit()
@@ -63,7 +64,7 @@ final class ChatViewModel {
         isLoading = true
         toolDemoOutput = ""
 
-        Task { @MainActor in
+        Task {
             defer { isLoading = false }
             do {
                 let sdk = TALLMKit()
