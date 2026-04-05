@@ -35,12 +35,41 @@ final class OpenAICompatibleProvider: AIProvider, Sendable {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
+        // Encode messages — .tool role becomes role "tool" with tool_call_id
+        let encodedMessages = messages.map { msg -> OpenAIRequest.OpenAIMessage in
+            OpenAIRequest.OpenAIMessage(
+                role: msg.role.rawValue,
+                content: msg.content,
+                toolCallId: msg.toolCallId
+            )
+        }
+
+        // Encode tools if present
+        let encodedTools: [OpenAIRequest.OpenAITool]? = parameters.tools.flatMap { tools in
+            tools.isEmpty ? nil : tools.map { tool in
+                let schema = (try? JSONSerialization.jsonObject(with: Data(tool.parametersSchema.utf8))) as? [String: Any]
+                return OpenAIRequest.OpenAITool(
+                    function: OpenAIRequest.OpenAIToolFunction(
+                        name: tool.name,
+                        description: tool.description,
+                        parameters: schema ?? [:]
+                    )
+                )
+            }
+        }
+
+        let responseFormat: OpenAIRequest.ResponseFormat? = parameters.jsonMode
+            ? OpenAIRequest.ResponseFormat(type: "json_object")
+            : nil
+
         let body = OpenAIRequest(
             model: model,
-            messages: messages.map { OpenAIRequest.OpenAIMessage(role: $0.role.rawValue, content: $0.content) },
+            messages: encodedMessages,
             temperature: parameters.temperature,
             maxTokens: parameters.maxTokens,
-            topP: parameters.topP
+            topP: parameters.topP,
+            tools: encodedTools,
+            responseFormat: responseFormat
         )
         request.httpBody = try JSONEncoder().encode(body)
 
@@ -59,11 +88,7 @@ final class OpenAICompatibleProvider: AIProvider, Sendable {
 
         do {
             let decoded = try JSONDecoder().decode(OpenAIResponse.self, from: data)
-            guard let text = decoded.choices.first?.message.content else {
-                throw AIError.decodingError(DecodingError.dataCorrupted(
-                    .init(codingPath: [], debugDescription: "No choices in response")
-                ))
-            }
+            let text = decoded.choices.first?.message.content ?? ""
             let usage = decoded.usage.map {
                 AIResponse.TokenUsage(
                     inputTokens: $0.promptTokens,
@@ -71,7 +96,15 @@ final class OpenAICompatibleProvider: AIProvider, Sendable {
                     totalTokens: $0.totalTokens
                 )
             }
-            return AIResponse(text: text, model: model, usage: usage)
+
+            // Decode tool calls if present
+            let toolCalls: [ToolCall]? = decoded.choices.first?.message.toolCalls.flatMap { calls in
+                calls.isEmpty ? nil : calls.map {
+                    ToolCall(id: $0.id, name: $0.function.name, arguments: $0.function.arguments)
+                }
+            }
+
+            return AIResponse(text: text, model: model, usage: usage, toolCalls: toolCalls)
         } catch let error as AIError {
             throw error
         } catch {
@@ -86,6 +119,47 @@ private struct OpenAIRequest: Encodable {
     struct OpenAIMessage: Encodable {
         let role: String
         let content: String
+        let toolCallId: String?
+
+        enum CodingKeys: String, CodingKey {
+            case role, content
+            case toolCallId = "tool_call_id"
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(role, forKey: .role)
+            try c.encode(content, forKey: .content)
+            if let id = toolCallId {
+                try c.encode(id, forKey: .toolCallId)
+            }
+        }
+    }
+
+    struct OpenAIToolFunction: Encodable {
+        let name: String
+        let description: String
+        let parameters: [String: Any]
+
+        func encode(to encoder: Encoder) throws {
+            var c = encoder.container(keyedBy: CodingKeys.self)
+            try c.encode(name, forKey: .name)
+            try c.encode(description, forKey: .description)
+            let data = try JSONSerialization.data(withJSONObject: parameters)
+            let raw = try JSONDecoder().decode(RawJSON.self, from: data)
+            try c.encode(raw, forKey: .parameters)
+        }
+
+        enum CodingKeys: String, CodingKey { case name, description, parameters }
+    }
+
+    struct OpenAITool: Encodable {
+        let type: String = "function"
+        let function: OpenAIToolFunction
+    }
+
+    struct ResponseFormat: Encodable {
+        let type: String
     }
 
     let model: String
@@ -93,19 +167,71 @@ private struct OpenAIRequest: Encodable {
     let temperature: Double?
     let maxTokens: Int?
     let topP: Double?
+    let tools: [OpenAITool]?
+    let responseFormat: ResponseFormat?
 
     enum CodingKeys: String, CodingKey {
-        case model, messages, temperature
+        case model, messages, temperature, tools
         case maxTokens = "max_tokens"
         case topP = "top_p"
+        case responseFormat = "response_format"
+    }
+}
+
+/// Helper to round-trip arbitrary JSON through Codable.
+private struct RawJSON: Codable {
+    let value: Any
+
+    init(_ value: Any) { self.value = value }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if let d = try? c.decode([String: RawJSON].self) { value = d.mapValues(\.value) }
+        else if let a = try? c.decode([RawJSON].self) { value = a.map(\.value) }
+        else if let s = try? c.decode(String.self) { value = s }
+        else if let n = try? c.decode(Double.self) { value = n }
+        else if let b = try? c.decode(Bool.self) { value = b }
+        else { value = NSNull() }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        switch value {
+        case let d as [String: Any]:
+            try c.encode(d.mapValues { RawJSON($0) })
+        case let a as [Any]:
+            try c.encode(a.map { RawJSON($0) })
+        case let s as String:
+            try c.encode(s)
+        case let n as Double:
+            try c.encode(n)
+        case let b as Bool:
+            try c.encode(b)
+        default:
+            try c.encodeNil()
+        }
     }
 }
 
 private struct OpenAIResponse: Decodable {
     struct Choice: Decodable {
         struct Msg: Decodable {
+            struct ToolCall: Decodable {
+                struct Function: Decodable {
+                    let name: String
+                    let arguments: String
+                }
+                let id: String
+                let function: Function
+            }
             let role: String
-            let content: String
+            let content: String?
+            let toolCalls: [ToolCall]?
+
+            enum CodingKeys: String, CodingKey {
+                case role, content
+                case toolCalls = "tool_calls"
+            }
         }
         let message: Msg
     }
