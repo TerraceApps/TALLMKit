@@ -1,9 +1,32 @@
 // Sources/TALLMKit/Types/RawJSON.swift
 import Foundation
 
-/// Round-trips arbitrary JSON dictionaries/arrays through Codable.
-/// Used by providers to encode tool parameter schemas and decode tool inputs.
+/// A `Codable` wrapper that round-trips arbitrary JSON values through Swift's
+/// `Codable` infrastructure without losing type fidelity.
+///
+/// Swift's `JSONEncoder` and `JSONDecoder` cannot directly handle `[String: Any]`
+/// or `[Any]` dictionaries. `RawJSON` bridges that gap by recursively wrapping
+/// every JSON primitive in this type, which knows how to encode and decode itself.
+///
+/// **Internal use only.** Providers use `RawJSON` in two places:
+/// 1. **Encoding** — converting `Tool.parametersSchema` (a JSON string) into a
+///    nested JSON object inside the request body.
+/// 2. **Decoding** — extracting `[String: Any]` tool-call arguments from the
+///    provider's response without requiring a concrete `Decodable` type.
+///
+/// ```swift
+/// // Encode a [String: Any] into a Codable request body field:
+/// let data = try JSONSerialization.data(withJSONObject: myDict)
+/// let raw  = try JSONDecoder().decode(RawJSON.self, from: data)
+/// try container.encode(raw, forKey: .parameters)
+///
+/// // Decode back to [String: Any]:
+/// let raw  = try container.decode(RawJSON.self, forKey: .args)
+/// let dict = raw.value as? [String: Any]
+/// ```
 struct RawJSON: Codable {
+    /// The unwrapped JSON value — one of `[String: Any]`, `[Any]`, `String`,
+    /// `Double`, `Bool`, or `NSNull`.
     let value: Any
 
     init(_ value: Any) { self.value = value }

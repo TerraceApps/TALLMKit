@@ -12,14 +12,24 @@ import Foundation
 public final class TALLMKit: @unchecked Sendable {
     private let lock = NSLock()
     private var _providers: [ProviderType: any AIProvider] = [:]
-    private let httpClient: any HTTPClientProtocol
+    private let httpClient: any HTTPClient
 
+    /// Creates a new `TALLMKit` instance with the default `URLSession`-backed HTTP client.
+    ///
+    /// Call `configure` after initialisation to register at least one provider
+    /// before making any `send` or `chat` calls.
     public init() {
-        self.httpClient = HTTPClient()
+        self.httpClient = HTTPClientImpl()
     }
 
-    /// Test-only initialiser; accessible via `@testable import TALLMKit`.
-    init(httpClient: any HTTPClientProtocol) {
+    /// Test-only initialiser — injects a custom `HTTPClient` implementation.
+    ///
+    /// Accessible from test targets via `@testable import TALLMKit`.
+    /// Not part of the public API; use `TALLMKit()` in production code.
+    ///
+    /// - Parameter httpClient: A mock or stub conforming to `HTTPClient`,
+    ///   used to intercept network calls in unit tests.
+    init(httpClient: any HTTPClient) {
         self.httpClient = httpClient
     }
 
@@ -123,11 +133,11 @@ public final class TALLMKit: @unchecked Sendable {
     private func makeProvider(for config: ProviderConfig) -> any AIProvider {
         switch config {
         case .openAI(let key):
-            return OpenAICompatibleProvider(variant: .openAI, apiKey: key, httpClient: httpClient)
+            return OpenAIProvider(apiKey: key, httpClient: httpClient)
         case .anthropic(let key):
             return AnthropicProvider(apiKey: key, httpClient: httpClient)
         case .grok(let key):
-            return OpenAICompatibleProvider(variant: .grok, apiKey: key, httpClient: httpClient)
+            return GrokProvider(apiKey: key, httpClient: httpClient)
         case .gemini(let key):
             return GeminiProvider(apiKey: key, httpClient: httpClient)
         }

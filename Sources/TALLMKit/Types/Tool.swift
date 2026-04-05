@@ -1,13 +1,61 @@
 // Sources/TALLMKit/Types/Tool.swift
 import Foundation
 
-/// A function/tool the model can invoke.
+/// Describes a function or action the model is allowed to call.
+///
+/// Define a tool by providing its name, a human-readable description, and a
+/// JSON Schema string for its parameters. Pass one or more tools in
+/// `RequestParameters.tools` to enable function calling for a request.
+///
+/// ```swift
+/// let weatherTool = Tool(
+///     name: "get_weather",
+///     description: "Returns the current temperature for a given city.",
+///     parametersSchema: """
+///     {
+///       "type": "object",
+///       "properties": {
+///         "city": { "type": "string", "description": "City name, e.g. Paris" }
+///       },
+///       "required": ["city"]
+///     }
+///     """
+/// )
+///
+/// var params = RequestParameters()
+/// params.tools = [weatherTool]
+/// let response = try await sdk.send("What's the weather in Tokyo?",
+///                                    model: .openAI(.gpt4oMini),
+///                                    parameters: params)
+/// ```
 public struct Tool: Sendable {
+    /// The function name the model will use to invoke this tool.
+    ///
+    /// Must be a valid identifier — lowercase letters, digits, and underscores only.
+    /// This is the value that appears in `ToolCall.name` when the model decides to call it.
     public let name: String
+
+    /// A concise description of what the tool does and when the model should use it.
+    ///
+    /// The model uses this text to decide whether to call the tool, so clear and
+    /// specific descriptions lead to more accurate function-calling behaviour.
     public let description: String
-    /// JSON Schema string, e.g. `{"type":"object","properties":{...},"required":[...]}`
+
+    /// A JSON Schema string that describes the tool's input parameters.
+    ///
+    /// Must be a valid JSON object string conforming to the JSON Schema specification.
+    /// Each provider parses this string and includes it in the API request so the
+    /// model knows how to format its arguments.
+    ///
+    /// Example: `"{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}"`
     public let parametersSchema: String
 
+    /// Creates a new `Tool`.
+    ///
+    /// - Parameters:
+    ///   - name: The function name (e.g. `"get_weather"`).
+    ///   - description: What the function does (shown to the model).
+    ///   - parametersSchema: A JSON Schema string for the function's input object.
     public init(name: String, description: String, parametersSchema: String) {
         self.name = name
         self.description = description
@@ -15,15 +63,47 @@ public struct Tool: Sendable {
     }
 }
 
-/// A single tool/function invocation requested by the model.
+/// A single function invocation the model wants to execute.
+///
+/// When a model decides to call a tool, it returns one or more `ToolCall` values
+/// in `AIResponse.toolCalls`. Execute the named function locally with the provided
+/// arguments, then send the result back using `Message.toolResult(toolCallId:content:)`.
+///
+/// ```swift
+/// if let calls = response.toolCalls {
+///     for call in calls {
+///         let result = myFunctions[call.name]?(call.arguments) ?? "{}"
+///         messages.append(.toolResult(toolCallId: call.id, content: result))
+///     }
+///     let followUp = try await sdk.chat(model, messages: messages)
+/// }
+/// ```
 public struct ToolCall: Sendable {
-    /// Provider-specific call ID (used when returning the tool result).
+    /// Provider-specific opaque identifier for this invocation.
+    ///
+    /// Pass this value as `toolCallId` in `Message.toolResult(toolCallId:content:)`
+    /// to correlate the result with the original call. Gemini uses the function name
+    /// as the ID; other providers use unique generated strings.
     public let id: String
-    /// The function name the model wants to call.
+
+    /// The name of the function the model wants to invoke.
+    ///
+    /// Matches `Tool.name` from the tool list sent in the request.
     public let name: String
-    /// JSON-encoded arguments string.
+
+    /// The function's input arguments encoded as a JSON object string.
+    ///
+    /// Decode this string against the parameter schema you defined in `Tool.parametersSchema`:
+    ///
+    /// ```swift
+    /// struct WeatherArgs: Decodable { let city: String }
+    /// let args = try JSONDecoder().decode(WeatherArgs.self, from: Data(call.arguments.utf8))
+    /// ```
     public let arguments: String
 
+    /// Creates a new `ToolCall`.
+    ///
+    /// This initialiser is used internally by providers when decoding API responses.
     public init(id: String, name: String, arguments: String) {
         self.id = id
         self.name = name
@@ -31,11 +111,33 @@ public struct ToolCall: Sendable {
     }
 }
 
-/// Wraps a strongly-typed decoded value alongside token-usage metadata.
+/// A provider-agnostic response that pairs a strongly-typed decoded value with
+/// the token usage from the underlying API call.
+///
+/// Returned by the typed-decoding overloads of `TALLMKit.send` and `TALLMKit.chat`:
+///
+/// ```swift
+/// struct Forecast: Decodable, Sendable {
+///     let city: String
+///     let temperature: Double
+/// }
+///
+/// let result = try await sdk.chat(
+///     .openAI(.gpt4oMini),
+///     messages: [.user("Give me Paris weather as JSON")],
+///     decoding: Forecast.self
+/// )
+/// print(result.value.temperature)        // 22.0
+/// print(result.usage?.totalTokens ?? 0)  // e.g. 45
+/// ```
 public struct TypedResponse<T: Decodable & Sendable>: Sendable {
+    /// The value decoded from the model's JSON response.
     public let value: T
+
+    /// Token consumption for the underlying request, if reported by the provider.
     public let usage: AIResponse.TokenUsage?
 
+    /// Creates a new `TypedResponse`. Used internally after successful JSON decoding.
     public init(value: T, usage: AIResponse.TokenUsage?) {
         self.value = value
         self.usage = usage
