@@ -3,66 +3,66 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 56;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B001001 /* TALLMKitExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A001001 /* TALLMKitExampleApp.swift */; };
-		B001002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A001002 /* ContentView.swift */; };
-		B001003 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A001003 /* ChatViewModel.swift */; };
-		B001004 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A001004 /* Assets.xcassets */; };
-		B001010 /* TALLMKit in Frameworks */ = {isa = PBXBuildFile; productRef = C001010 /* TALLMKit */; };
+		AA11000000000000000001B1 /* TALLMKitExampleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA22000000000000000001B1 /* TALLMKitExampleApp.swift */; };
+		AA11000000000000000002B2 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA22000000000000000002B2 /* ContentView.swift */; };
+		AA11000000000000000003B3 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA22000000000000000003B3 /* ChatViewModel.swift */; };
+		AA11000000000000000004B4 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AA22000000000000000004B4 /* Assets.xcassets */; };
+		AA11000000000000000005B5 /* TALLMKit in Frameworks */ = {isa = PBXBuildFile; productRef = AACCCCCCCCCCCCCCCCCCCCCC /* TALLMKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A001001 /* TALLMKitExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TALLMKitExampleApp.swift; sourceTree = "<group>"; };
-		A001002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		A001003 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
-		A001004 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		A001000 /* TALLMKitExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TALLMKitExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA22000000000000000001B1 /* TALLMKitExampleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TALLMKitExampleApp.swift; sourceTree = "<group>"; };
+		AA22000000000000000002B2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AA22000000000000000003B3 /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
+		AA22000000000000000004B4 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AA22000000000000000000A0 /* TALLMKitExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TALLMKitExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		E001002 /* Frameworks */ = {
+		AA33000000000000000001F1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B001010 /* TALLMKit in Frameworks */,
+				AA11000000000000000005B5 /* TALLMKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		MainGroup = {
+		AA44000000000000000000AA /* MainGroup */ = {
 			isa = PBXGroup;
 			children = (
-				AppGroup /* TALLMKitExample */,
-				ProductsGroup /* Products */,
-				PackagesGroup /* Packages */,
+				AA44000000000000000001AB /* TALLMKitExample */,
+				AA44000000000000000002AC /* Products */,
+				AA44000000000000000003AD /* Packages */,
 			);
 			sourceTree = "<group>";
 		};
-		AppGroup /* TALLMKitExample */ = {
+		AA44000000000000000001AB /* TALLMKitExample */ = {
 			isa = PBXGroup;
 			children = (
-				A001001 /* TALLMKitExampleApp.swift */,
-				A001002 /* ContentView.swift */,
-				A001003 /* ChatViewModel.swift */,
-				A001004 /* Assets.xcassets */,
+				AA22000000000000000001B1 /* TALLMKitExampleApp.swift */,
+				AA22000000000000000002B2 /* ContentView.swift */,
+				AA22000000000000000003B3 /* ChatViewModel.swift */,
+				AA22000000000000000004B4 /* Assets.xcassets */,
 			);
 			path = TALLMKitExample;
 			sourceTree = "<group>";
 		};
-		ProductsGroup /* Products */ = {
+		AA44000000000000000002AC /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A001000 /* TALLMKitExample.app */,
+				AA22000000000000000000A0 /* TALLMKitExample.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		PackagesGroup /* Packages */ = {
+		AA44000000000000000003AD /* Packages */ = {
 			isa = PBXGroup;
 			children = (
 			);
@@ -72,13 +72,13 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		Target001 /* TALLMKitExample */ = {
+		AA55000000000000000000EE /* TALLMKitExample */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BuildConfigList001 /* Build configuration list for PBXNativeTarget "TALLMKitExample" */;
+			buildConfigurationList = AA88000000000000000002CC /* Build configuration list for PBXNativeTarget "TALLMKitExample" */;
 			buildPhases = (
-				E001001 /* Sources */,
-				E001002 /* Frameworks */,
-				E001003 /* Resources */,
+				AA33000000000000000002F2 /* Sources */,
+				AA33000000000000000001F1 /* Frameworks */,
+				AA33000000000000000003F3 /* Resources */,
 			);
 			buildRules = (
 			);
@@ -86,28 +86,28 @@
 			);
 			name = TALLMKitExample;
 			packageProductDependencies = (
-				C001010 /* TALLMKit */,
+				AACCCCCCCCCCCCCCCCCCCCCC /* TALLMKit */,
 			);
 			productName = TALLMKitExample;
-			productReference = A001000 /* TALLMKitExample.app */;
+			productReference = AA22000000000000000000A0 /* TALLMKitExample.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		Project001 /* Project object */ = {
+		AA66000000000000000000FF /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					Target001 = {
+					AA55000000000000000000EE = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
 			};
-			buildConfigurationList = BuildConfigList000 /* Build configuration list for PBXProject "TALLMKitExample" */;
+			buildConfigurationList = AA88000000000000000001BB /* Build configuration list for PBXProject "TALLMKitExample" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -115,99 +115,65 @@
 				en,
 				Base,
 			);
-			mainGroup = MainGroup;
+			mainGroup = AA44000000000000000000AA /* MainGroup */;
 			packageReferences = (
-				D001001 /* XCLocalSwiftPackageReference "../../" */,
+				AABBBBBBBBBBBBBBBBBBBBBB /* XCLocalSwiftPackageReference "../../" */,
 			);
-			productRefGroup = ProductsGroup /* Products */;
+			productRefGroup = AA44000000000000000002AC /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				Target001 /* TALLMKitExample */,
+				AA55000000000000000000EE /* TALLMKitExample */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		E001003 /* Resources */ = {
+		AA33000000000000000003F3 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B001004 /* Assets.xcassets in Resources */,
+				AA11000000000000000004B4 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		E001001 /* Sources */ = {
+		AA33000000000000000002F2 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B001001 /* TALLMKitExampleApp.swift in Sources */,
-				B001002 /* ContentView.swift in Sources */,
-				B001003 /* ChatViewModel.swift in Sources */,
+				AA11000000000000000001B1 /* TALLMKitExampleApp.swift in Sources */,
+				AA11000000000000000002B2 /* ContentView.swift in Sources */,
+				AA11000000000000000003B3 /* ChatViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
-		Config000Debug /* Debug */ = {
+		AA99000000000000000001D1 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
 				);
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
-				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
@@ -215,68 +181,34 @@
 			};
 			name = Debug;
 		};
-		Config000Release /* Release */ = {
+		AA99000000000000000002D2 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
-				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
-				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
-				CLANG_WARN_BOOL_CONVERSION = YES;
-				CLANG_WARN_COMMA = YES;
-				CLANG_WARN_CONSTANT_CONVERSION = YES;
-				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
-				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
-				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
-				CLANG_WARN_EMPTY_BODY = YES;
-				CLANG_WARN_ENUM_CONVERSION = YES;
-				CLANG_WARN_INFINITE_RECURSION = YES;
-				CLANG_WARN_INT_CONVERSION = YES;
-				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
-				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
-				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
-				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
-				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
-				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
-				CLANG_WARN_STRICT_PROTOTYPES = YES;
-				CLANG_WARN_SUSPICIOUS_MOVE = YES;
-				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
-				CLANG_WARN_UNREACHABLE_CODE = YES;
-				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_NO_COMMON_BLOCKS = YES;
-				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
-				GCC_WARN_UNDECLARED_SELECTOR = YES;
-				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
-				GCC_WARN_UNUSED_FUNCTION = YES;
-				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
-				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
-		Config001Debug /* Debug */ = {
+		AA99000000000000000003D3 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -295,14 +227,13 @@
 			};
 			name = Debug;
 		};
-		Config001Release /* Release */ = {
+		AA99000000000000000004D4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -324,20 +255,20 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		BuildConfigList000 /* Build configuration list for PBXProject "TALLMKitExample" */ = {
+		AA88000000000000000001BB /* Build configuration list for PBXProject "TALLMKitExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				Config000Debug /* Debug */,
-				Config000Release /* Release */,
+				AA99000000000000000001D1 /* Debug */,
+				AA99000000000000000002D2 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BuildConfigList001 /* Build configuration list for PBXNativeTarget "TALLMKitExample" */ = {
+		AA88000000000000000002CC /* Build configuration list for PBXNativeTarget "TALLMKitExample" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				Config001Debug /* Debug */,
-				Config001Release /* Release */,
+				AA99000000000000000003D3 /* Debug */,
+				AA99000000000000000004D4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -345,20 +276,20 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		D001001 /* XCLocalSwiftPackageReference "../../" */ = {
+		AABBBBBBBBBBBBBBBBBBBBBB /* XCLocalSwiftPackageReference "../../" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = "../../";
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		C001010 /* TALLMKit */ = {
+		AACCCCCCCCCCCCCCCCCCCCCC /* TALLMKit */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = D001001 /* XCLocalSwiftPackageReference "../../" */;
+			package = AABBBBBBBBBBBBBBBBBBBBBB /* XCLocalSwiftPackageReference "../../" */;
 			productName = TALLMKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 
 	};
-	rootObject = Project001 /* Project object */;
+	rootObject = AA66000000000000000000FF /* Project object */;
 }
