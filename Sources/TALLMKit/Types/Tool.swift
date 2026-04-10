@@ -66,22 +66,17 @@ public indirect enum JSONSchema: Sendable {
 /// Describes a function or action the model is allowed to call.
 ///
 /// Define a tool by providing its name, a human-readable description, and a
-/// JSON Schema string for its parameters. Pass one or more tools in
+/// `JSONSchema` value for its parameters. Pass one or more tools in
 /// `RequestParameters.tools` to enable function calling for a request.
 ///
 /// ```swift
 /// let weatherTool = Tool(
 ///     name: "get_weather",
 ///     description: "Returns the current temperature for a given city.",
-///     parametersSchema: """
-///     {
-///       "type": "object",
-///       "properties": {
-///         "city": { "type": "string", "description": "City name, e.g. Paris" }
-///       },
-///       "required": ["city"]
-///     }
-///     """
+///     parameters: .object(
+///         properties: ["city": .string],
+///         required: ["city"]
+///     )
 /// )
 ///
 /// var params = RequestParameters()
@@ -92,36 +87,24 @@ public indirect enum JSONSchema: Sendable {
 /// ```
 public struct Tool: Sendable {
     /// The function name the model will use to invoke this tool.
-    ///
-    /// Must be a valid identifier — lowercase letters, digits, and underscores only.
-    /// This is the value that appears in `ToolCall.name` when the model decides to call it.
     public let name: String
 
     /// A concise description of what the tool does and when the model should use it.
-    ///
-    /// The model uses this text to decide whether to call the tool, so clear and
-    /// specific descriptions lead to more accurate function-calling behaviour.
     public let description: String
 
-    /// A JSON Schema string that describes the tool's input parameters.
-    ///
-    /// Must be a valid JSON object string conforming to the JSON Schema specification.
-    /// Each provider parses this string and includes it in the API request so the
-    /// model knows how to format its arguments.
-    ///
-    /// Example: `"{\"type\":\"object\",\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"]}"`
-    public let parametersSchema: String
+    /// The JSON Schema describing this tool's input parameters.
+    public let parameters: JSONSchema
 
     /// Creates a new `Tool`.
     ///
     /// - Parameters:
     ///   - name: The function name (e.g. `"get_weather"`).
     ///   - description: What the function does (shown to the model).
-    ///   - parametersSchema: A JSON Schema string for the function's input object.
-    public init(name: String, description: String, parametersSchema: String) {
+    ///   - parameters: A `JSONSchema` value describing the function's input object.
+    public init(name: String, description: String, parameters: JSONSchema) {
         self.name = name
         self.description = description
-        self.parametersSchema = parametersSchema
+        self.parameters = parameters
     }
 }
 
