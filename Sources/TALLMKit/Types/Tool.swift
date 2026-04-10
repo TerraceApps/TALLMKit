@@ -1,6 +1,65 @@
 // Sources/TALLMKit/Types/Tool.swift
 import Foundation
 
+/// A type-safe representation of a JSON Schema used to describe tool parameters.
+///
+/// Build schemas using the enum cases and pass them to `Tool.parameters`.
+/// The SDK serializes to JSON internally — no manual JSON string required.
+///
+/// ```swift
+/// let schema: JSONSchema = .object(
+///     properties: ["city": .string, "unit": .optional(.enum(["C", "F"]))],
+///     required: ["city"]
+/// )
+/// ```
+public indirect enum JSONSchema: Sendable {
+    /// A JSON string value.
+    case string
+    /// A JSON integer value.
+    case integer
+    /// A JSON floating-point number value.
+    case number
+    /// A JSON boolean value.
+    case boolean
+    /// A JSON object with named properties. `required` lists mandatory property names.
+    case object(properties: [String: JSONSchema], required: [String] = [])
+    /// A JSON array whose items all conform to the given schema.
+    case array(of: JSONSchema)
+    /// A string constrained to one of the provided values.
+    case `enum`([String])
+    /// Marks the wrapped schema as nullable (`"nullable": true`).
+    case optional(JSONSchema)
+
+    /// Converts this schema to a `[String: Any]` dictionary suitable for JSON serialization.
+    func toJSON() -> [String: Any] {
+        switch self {
+        case .string:
+            return ["type": "string"]
+        case .integer:
+            return ["type": "integer"]
+        case .number:
+            return ["type": "number"]
+        case .boolean:
+            return ["type": "boolean"]
+        case .array(let inner):
+            return ["type": "array", "items": inner.toJSON()]
+        case .enum(let values):
+            return ["type": "string", "enum": values]
+        case .object(let props, let required):
+            var dict: [String: Any] = [
+                "type": "object",
+                "properties": props.mapValues { $0.toJSON() }
+            ]
+            if !required.isEmpty { dict["required"] = required }
+            return dict
+        case .optional(let inner):
+            var dict = inner.toJSON()
+            dict["nullable"] = true
+            return dict
+        }
+    }
+}
+
 /// Describes a function or action the model is allowed to call.
 ///
 /// Define a tool by providing its name, a human-readable description, and a
