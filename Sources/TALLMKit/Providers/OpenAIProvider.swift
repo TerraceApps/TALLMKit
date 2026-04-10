@@ -18,15 +18,14 @@ final class OpenAIProvider: AIProvider, Sendable {
         var request = try Endpoints.OpenAI(apiKey: apiKey).urlRequest()
 
         let encodedMessages = messages.map { msg in
-            OAIRequest.Msg(role: msg.role.rawValue, content: msg.content, toolCallId: msg.toolCallId)
+            OAIRequest.Msg(role: msg.role.rawValue, content: msg.content, toolCallId: msg.toolCallId, toolCalls: msg.toolCalls)
         }
 
         let encodedTools: [OAIRequest.Tool]? = parameters.tools.flatMap { tools in
             guard !tools.isEmpty else { return nil }
             return tools.map { tool in
-                let schema = (try? JSONSerialization.jsonObject(with: Data(tool.parametersSchema.utf8))) as? [String: Any]
                 return OAIRequest.Tool(
-                    function: OAIRequest.ToolFunction(name: tool.name, description: tool.description, parameters: schema ?? [:])
+                    function: OAIRequest.ToolFunction(name: tool.name, description: tool.description, parameters: tool.parameters.toJSON())
                 )
             }
         }
@@ -79,20 +78,41 @@ final class OpenAIProvider: AIProvider, Sendable {
 
 private struct OAIRequest: Encodable {
     struct Msg: Encodable {
+        struct MsgToolCall: Encodable {
+            struct Function: Encodable {
+                let name: String
+                let arguments: String
+            }
+            let id: String
+            let type: String = "function"
+            let function: Function
+        }
+
         let role: String
         let content: String
         let toolCallId: String?
+        let toolCalls: [ToolCall]?
 
         enum CodingKeys: String, CodingKey {
             case role, content
             case toolCallId = "tool_call_id"
+            case toolCalls = "tool_calls"
         }
 
         func encode(to encoder: Encoder) throws {
             var c = encoder.container(keyedBy: CodingKeys.self)
             try c.encode(role, forKey: .role)
-            try c.encode(content, forKey: .content)
+            // OpenAI expects null content (not empty string) when only tool_calls are present
+            if toolCalls != nil && content.isEmpty {
+                try c.encodeNil(forKey: .content)
+            } else {
+                try c.encode(content, forKey: .content)
+            }
             if let id = toolCallId { try c.encode(id, forKey: .toolCallId) }
+            if let calls = toolCalls, !calls.isEmpty {
+                let encoded = calls.map { MsgToolCall(id: $0.id, function: .init(name: $0.name, arguments: $0.arguments)) }
+                try c.encode(encoded, forKey: .toolCalls)
+            }
         }
     }
 

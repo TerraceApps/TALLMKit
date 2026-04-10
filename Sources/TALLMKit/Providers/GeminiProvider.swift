@@ -51,11 +51,10 @@ final class GeminiProvider: AIProvider, Sendable {
         let encodedTools: [GeminiRequest.GeminiTool]? = parameters.tools.flatMap { tools in
             guard !tools.isEmpty else { return nil }
             let decls = tools.map { tool -> GeminiRequest.FunctionDeclaration in
-                let schema = (try? JSONSerialization.jsonObject(with: Data(tool.parametersSchema.utf8))) as? [String: Any]
                 return GeminiRequest.FunctionDeclaration(
                     name: tool.name,
                     description: tool.description,
-                    parameters: schema ?? [:]
+                    parameters: tool.parameters.toJSON()
                 )
             }
             return [GeminiRequest.GeminiTool(functionDeclarations: decls)]

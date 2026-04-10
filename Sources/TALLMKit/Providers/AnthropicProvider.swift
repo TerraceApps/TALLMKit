@@ -47,11 +47,10 @@ final class AnthropicProvider: AIProvider, Sendable {
         // Encode tools if present
         let encodedTools: [AnthropicRequest.AnthropicTool]? = parameters.tools.flatMap { tools in
             tools.isEmpty ? nil : tools.map { tool in
-                let schema = (try? JSONSerialization.jsonObject(with: Data(tool.parametersSchema.utf8))) as? [String: Any]
                 return AnthropicRequest.AnthropicTool(
                     name: tool.name,
                     description: tool.description,
-                    inputSchema: schema ?? [:]
+                    inputSchema: tool.parameters.toJSON()
                 )
             }
         }

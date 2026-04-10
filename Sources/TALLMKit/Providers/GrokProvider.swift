@@ -24,9 +24,8 @@ final class GrokProvider: AIProvider, Sendable {
         let encodedTools: [GrokRequest.Tool]? = parameters.tools.flatMap { tools in
             guard !tools.isEmpty else { return nil }
             return tools.map { tool in
-                let schema = (try? JSONSerialization.jsonObject(with: Data(tool.parametersSchema.utf8))) as? [String: Any]
                 return GrokRequest.Tool(
-                    function: GrokRequest.ToolFunction(name: tool.name, description: tool.description, parameters: schema ?? [:])
+                    function: GrokRequest.ToolFunction(name: tool.name, description: tool.description, parameters: tool.parameters.toJSON())
                 )
             }
         }
