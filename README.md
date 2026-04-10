@@ -119,9 +119,10 @@ if let usage = response.usage {
 let weatherTool = Tool(
     name: "get_weather",
     description: "Get current temperature for a city",
-    parametersSchema: """
-    {"type":"object","properties":{"city":{"type":"string"}},"required":["city"]}
-    """
+    parameters: .object(
+        properties: ["city": .string, "unit": .optional(.enum(["C", "F"]))],
+        required: ["city"]
+    )
 )
 var params = RequestParameters()
 params.tools = [weatherTool]
@@ -132,7 +133,7 @@ if let calls = response.toolCalls {
     // Execute tool locally, then send result back
     let result = try await sdk.chat(.openAI(.gpt4oMini), messages: [
         .user("What's the weather in Paris?"),
-        .assistant(response.text),
+        .assistant(from: response),
         .toolResult(toolCallId: calls[0].id, content: "{\"temp\": 22, \"unit\": \"C\"}")
     ])
     print(result.text)
