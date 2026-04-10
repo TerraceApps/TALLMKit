@@ -74,9 +74,10 @@ final class ChatViewModel {
                 let weatherTool = Tool(
                     name: "get_weather",
                     description: "Get current temperature for a city",
-                    parametersSchema: """
-                    {"type":"object","properties":{"city":{"type":"string"}},"required":["city"]}
-                    """
+                    parameters: .object(
+                        properties: ["city": .string],
+                        required: ["city"]
+                    )
                 )
                 var params = RequestParameters()
                 params.tools = [weatherTool]
@@ -100,7 +101,7 @@ final class ChatViewModel {
 
                     let followUp = try await sdk.chat(model, messages: [
                         .user("What's the weather in Paris right now?"),
-                        .assistant(firstResponse.text),
+                        .assistant(from: firstResponse),
                         .toolResult(toolCallId: call.id, content: fakeWeather)
                     ])
                     toolDemoOutput += "\n\nFinal answer: \(followUp.text)"
