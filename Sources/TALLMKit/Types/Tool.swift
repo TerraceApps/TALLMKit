@@ -138,7 +138,7 @@ public struct ToolCall: Sendable {
 
     /// The function's input arguments encoded as a JSON object string.
     ///
-    /// Decode this string against the parameter schema you defined in `Tool.parametersSchema`:
+    /// Decode this string against the parameter schema you defined in `Tool.parameters`:
     ///
     /// ```swift
     /// struct WeatherArgs: Decodable { let city: String }
