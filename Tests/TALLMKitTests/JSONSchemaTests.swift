@@ -16,18 +16,21 @@ struct JSONSchemaTests {
     func integerSchema() {
         let json = JSONSchema.integer.toJSON()
         #expect(json["type"] as? String == "integer")
+        #expect(json.count == 1)
     }
 
     @Test("number produces {type:number}")
     func numberSchema() {
         let json = JSONSchema.number.toJSON()
         #expect(json["type"] as? String == "number")
+        #expect(json.count == 1)
     }
 
     @Test("boolean produces {type:boolean}")
     func booleanSchema() {
         let json = JSONSchema.boolean.toJSON()
         #expect(json["type"] as? String == "boolean")
+        #expect(json.count == 1)
     }
 
     @Test("enum produces {type:string, enum:[...]}")
@@ -81,6 +84,16 @@ struct JSONSchemaTests {
         #expect(json["nullable"] as? Bool == true)
     }
 
+    @Test("optional wraps object schema and adds nullable:true")
+    func optionalObjectSchema() {
+        let json = JSONSchema.optional(.object(properties: ["city": .string], required: ["city"])).toJSON()
+        #expect(json["type"] as? String == "object")
+        #expect(json["nullable"] as? Bool == true)
+        let props = json["properties"] as? [String: [String: Any]]
+        #expect(props?["city"]?["type"] as? String == "string")
+        #expect(json["required"] as? [String] == ["city"])
+    }
+
     @Test("nested object encodes recursively")
     func nestedObject() {
         let json = JSONSchema.object(
@@ -94,5 +107,6 @@ struct JSONSchemaTests {
         #expect(addr?["type"] as? String == "object")
         let innerProps = addr?["properties"] as? [String: [String: Any]]
         #expect(innerProps?["city"]?["type"] as? String == "string")
+        #expect(addr?["required"] as? [String] == ["city"])
     }
 }

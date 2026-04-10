@@ -31,6 +31,9 @@ public indirect enum JSONSchema: Sendable {
     case optional(JSONSchema)
 
     /// Converts this schema to a `[String: Any]` dictionary suitable for JSON serialization.
+    ///
+    /// - Note: This method is internal. It is used by SDK providers to build request bodies
+    ///   and is not part of the public API.
     func toJSON() -> [String: Any] {
         switch self {
         case .string:
