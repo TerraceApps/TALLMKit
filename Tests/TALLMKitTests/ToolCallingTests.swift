@@ -9,9 +9,10 @@ struct ToolCallingTests {
     static let weatherTool = Tool(
         name: "get_weather",
         description: "Get current temperature for a city",
-        parametersSchema: """
-        {"type":"object","properties":{"city":{"type":"string"}},"required":["city"]}
-        """
+        parameters: .object(
+            properties: ["city": .string],
+            required: ["city"]
+        )
     )
 
     // MARK: – OpenAI / Grok
