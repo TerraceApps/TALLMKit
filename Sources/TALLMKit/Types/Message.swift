@@ -48,11 +48,16 @@ public struct Message: Sendable {
     /// This value comes from `ToolCall.id` returned in `AIResponse.toolCalls`.
     public let toolCallId: String?
 
+    /// Tool calls the assistant is requesting, if any. Only present for `.assistant` messages
+    /// that were built from an `AIResponse` containing tool invocations.
+    public let toolCalls: [ToolCall]?
+
     /// Creates a `Message` with the given role, content, and optional tool call ID.
-    public init(role: Role, content: String, toolCallId: String? = nil) {
+    public init(role: Role, content: String, toolCallId: String? = nil, toolCalls: [ToolCall]? = nil) {
         self.role = role
         self.content = content
         self.toolCallId = toolCallId
+        self.toolCalls = toolCalls
     }
 
     // MARK: - Factories
@@ -79,6 +84,25 @@ public struct Message: Sendable {
     /// - Parameter content: The model's previous reply text.
     public static func assistant(_ content: String) -> Message {
         Message(role: .assistant, content: content)
+    }
+
+    /// Creates an assistant message from a full `AIResponse`, preserving any tool calls.
+    ///
+    /// Use this overload when replaying a turn where the model invoked tools. Providers
+    /// that require the original `tool_calls` array in the message history (e.g. OpenAI)
+    /// will encode it correctly when this factory is used.
+    ///
+    /// ```swift
+    /// let first = try await sdk.send("What's the weather?", model: model, parameters: params)
+    /// // … execute tools …
+    /// let followUp = try await sdk.chat(model, messages: [
+    ///     .user("What's the weather?"),
+    ///     .assistant(from: first),
+    ///     .toolResult(toolCallId: call.id, content: result),
+    /// ])
+    /// ```
+    public static func assistant(from response: AIResponse) -> Message {
+        Message(role: .assistant, content: response.text, toolCalls: response.toolCalls)
     }
 
     /// Creates a tool result message to return after executing a function call.
