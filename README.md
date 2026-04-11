@@ -313,3 +313,37 @@ do {
 ```
 
 ---
+
+## Example App
+
+A runnable SwiftUI app lives in `Examples/TALLMKitExample/`. It demonstrates every feature of the SDK across three tabs:
+
+| Tab | What it shows |
+|-----|---------------|
+| **Chat** | Single message send with any configured provider and model |
+| **Tool Demo** | Live tool calling round-trip with a simulated weather function |
+| **Compare** | `sdk.combine()` — fire the same prompt at OpenAI, Anthropic, and Gemini side by side |
+
+**To run:**
+
+1. Open `Examples/TALLMKitExample/TALLMKitExample.xcodeproj` in Xcode
+2. Select an iOS simulator (iOS 17+)
+3. Press `⌘R`
+4. Enter your API key(s) and start experimenting
+
+The app references TALLMKit as a local Swift package — no additional setup required.
+
+---
+
+## Contributing
+
+Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change.
+
+---
+
+<div align="center">
+
+Made with ❤️ by [TerraceApps](https://github.com/TerraceApps)
+
+</div>
+
