@@ -73,3 +73,37 @@ targets: [
 Or add it in **Xcode**: `File → Add Package Dependencies` and paste the repo URL.
 
 ---
+
+## Quick Start
+
+```swift
+import TALLMKit
+
+let sdk = TALLMKit()
+sdk.configure(.openAI(key: "sk-..."))
+
+let response = try await sdk.send("What is the Swift concurrency model?", model: .openAI(.gpt4oMini))
+print(response.text)
+```
+
+That's it. Configure once, send anywhere.
+
+---
+
+## Usage
+
+### Configure providers
+
+Register one or more providers at startup. Calling `configure` again with the same provider replaces it.
+
+```swift
+let sdk = TALLMKit()
+sdk.configure(
+    .openAI(key: "sk-..."),
+    .anthropic(key: "sk-ant-..."),
+    .grok(key: "xai-..."),
+    .gemini(key: "AIza...")
+)
+```
+
+---
