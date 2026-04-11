@@ -128,6 +128,53 @@ public final class TALLMKit: @unchecked Sendable {
         }
     }
 
+    /// Send multiple requests to different providers concurrently.
+    ///
+    /// All requests fire simultaneously via `withTaskGroup`. The method returns
+    /// when every request has either completed or failed.
+    ///
+    /// Errors are **captured per slot** — the call itself never throws.
+    /// Use `MultiResponse.successes`, `MultiResponse.failures`, or subscript
+    /// access on the returned value to inspect results.
+    ///
+    /// ```swift
+    /// let multi = await sdk.combine([
+    ///     CombineRequest(tag: "openai", message: "Hello", model: .openAI(.gpt4oMini)),
+    ///     CombineRequest(tag: "claude", message: "Hi!", model: .anthropic(.claudeSonnet46)),
+    /// ])
+    /// print(multi.successes)  // [String: AIResponse]
+    /// print(multi.failures)   // [String: Error]
+    /// ```
+    ///
+    /// - Parameter requests: One or more `CombineRequest` values. Duplicate tags
+    ///   result in last-writer-wins. An empty array returns an empty `MultiResponse` immediately.
+    /// - Returns: A `MultiResponse` containing a `Result` for every input tag.
+    public func combine(_ requests: [CombineRequest]) async -> MultiResponse {
+        var results: [String: Result<AIResponse, Error>] = [:]
+
+        await withTaskGroup(of: (String, Result<AIResponse, Error>).self) { group in
+            for request in requests {
+                group.addTask {
+                    do {
+                        let response = try await self.send(
+                            request.message,
+                            model: request.model,
+                            parameters: request.parameters
+                        )
+                        return (request.tag, .success(response))
+                    } catch {
+                        return (request.tag, .failure(error))
+                    }
+                }
+            }
+            for await (tag, result) in group {
+                results[tag] = result
+            }
+        }
+
+        return MultiResponse(results: results)
+    }
+
     // MARK: – Private
 
     private func makeProvider(for config: ProviderConfig) -> any AIProvider {
