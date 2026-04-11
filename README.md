@@ -196,3 +196,120 @@ if let usage = response.usage {
 ```
 
 ---
+
+### Concurrent multi-provider requests
+
+Send the same (or different) prompt to multiple providers simultaneously. Every slot resolves independently — one failure never blocks the others.
+
+```swift
+sdk.configure(
+    .openAI(key: "sk-..."),
+    .anthropic(key: "sk-ant-..."),
+    .gemini(key: "AIza...")
+)
+
+let multi = await sdk.combine([
+    CombineRequest(tag: "openai",    message: "Explain async/await", model: .openAI(.gpt4oMini)),
+    CombineRequest(tag: "anthropic", message: "Explain async/await", model: .anthropic(.claudeSonnet46)),
+    CombineRequest(tag: "gemini",    message: "Explain async/await", model: .gemini(.gemini20Flash)),
+])
+
+// All successes
+for (tag, response) in multi.successes {
+    print("\(tag): \(response.text)")
+}
+
+// A specific result
+switch multi["anthropic"] {
+case .success(let r): print(r.text)
+case .failure(let e): print("Failed:", e)
+case nil: break
+}
+```
+
+Each slot can carry its own `RequestParameters`:
+
+```swift
+let multi = await sdk.combine([
+    CombineRequest(tag: "fast",     message: "Summarize this", model: .openAI(.gpt4oMini),
+                   parameters: RequestParameters(temperature: 0.0, maxTokens: 128)),
+    CombineRequest(tag: "thorough", message: "Summarize this", model: .anthropic(.claudeOpus46),
+                   parameters: RequestParameters(temperature: 0.7, maxTokens: 1024)),
+])
+```
+
+---
+
+### Tool calling
+
+```swift
+let weatherTool = Tool(
+    name: "get_weather",
+    description: "Get current temperature for a city",
+    parameters: .object(
+        properties: ["city": .string, "unit": .optional(.enum(["C", "F"]))],
+        required: ["city"]
+    )
+)
+
+var params = RequestParameters()
+params.tools = [weatherTool]
+
+let response = try await sdk.send("What's the weather in Paris?",
+                                   model: .openAI(.gpt4oMini),
+                                   parameters: params)
+
+if let calls = response.toolCalls, let call = calls.first {
+    let result = try await sdk.chat(.openAI(.gpt4oMini), messages: [
+        .user("What's the weather in Paris?"),
+        .assistant(from: response),
+        .toolResult(toolCallId: call.id, content: "{\"temp\": 22, \"unit\": \"C\"}")
+    ])
+    print(result.text)
+}
+```
+
+---
+
+### Typed JSON decoding
+
+```swift
+struct WeatherInfo: Decodable, Sendable {
+    let city: String
+    let temperature: Double
+    let condition: String
+}
+
+let result = try await sdk.send(
+    "Give me Paris weather as JSON",
+    model: .openAI(.gpt4oMini),
+    decoding: WeatherInfo.self
+)
+
+print(result.value.city)         // "Paris"
+print(result.value.temperature)  // 22.0
+print(result.usage?.totalTokens) // Optional<Int>
+```
+
+---
+
+### Error handling
+
+```swift
+do {
+    let response = try await sdk.send("Hello", model: .openAI(.gpt4oMini))
+    print(response.text)
+} catch AIError.providerNotConfigured {
+    print("Call sdk.configure(...) before sending.")
+} catch AIError.invalidAPIKey {
+    print("Invalid API key.")
+} catch AIError.rateLimited(let retryAfter) {
+    print("Rate limited. Retry after \(retryAfter ?? 0)s.")
+} catch AIError.httpError(let status, let body) {
+    print("HTTP \(status): \(body)")
+} catch AIError.networkError(let error) {
+    print("Network error: \(error.localizedDescription)")
+}
+```
+
+---
