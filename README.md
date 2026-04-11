@@ -5,6 +5,7 @@
 ![Swift](https://img.shields.io/badge/Swift-6.0-F05138?logo=swift&logoColor=white)
 ![Platforms](https://img.shields.io/badge/Platforms-iOS%2015%20%7C%20macOS%2012%20%7C%20watchOS%208%20%7C%20tvOS%2015-blue)
 ![SPM](https://img.shields.io/badge/SPM-Compatible-brightgreen?logo=swift&logoColor=white)
+[![GitHub](https://img.shields.io/badge/GitHub-TerraceApps%2FTALLMKit-181717?logo=github)](https://github.com/TerraceApps/TALLMKit)
 ![Dependencies](https://img.shields.io/badge/Dependencies-0-success)
 ![Tests](https://img.shields.io/badge/Tests-76%20passing-success)
 
@@ -58,7 +59,7 @@ Add TALLMKit to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/your-org/TALLMKit.git", from: "1.0.0")
+    .package(url: "https://github.com/TerraceApps/TALLMKit.git", from: "1.0.0")
 ]
 ```
 
