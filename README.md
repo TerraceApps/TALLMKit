@@ -13,3 +13,27 @@
 </div>
 
 ---
+
+## Providers
+
+| Provider | Status | Models |
+|----------|--------|--------|
+| **OpenAI** | ✅ Supported | GPT-4o, GPT-4o Mini, GPT-4 Turbo, GPT-3.5 Turbo |
+| **Anthropic** | ✅ Supported | Claude Opus 4.6, Claude Sonnet 4.6, Claude Haiku 4.5 |
+| **Grok (xAI)** | ✅ Supported | Grok 3, Grok 3 Mini, Grok 2 |
+| **Gemini** | ✅ Supported | Gemini 2.0 Flash, Gemini 1.5 Pro, Gemini 1.5 Flash |
+
+---
+
+## Features
+
+- 🔀 **Unified API** — one interface for all providers, swap with a single line
+- ⚡ **Concurrent requests** — fire multiple providers at once with `sdk.combine()`
+- 🧠 **Multi-turn chat** — full conversation history support
+- 🛠 **Tool calling** — function calling across all providers
+- 📦 **Typed decoding** — decode JSON responses directly into `Decodable` types
+- 🔒 **Swift 6 concurrency** — fully `Sendable`, actor-safe, zero data races
+- 📊 **Token usage** — input/output/total token counts on every response
+- 0️⃣ **Zero dependencies** — no third-party packages
+
+---
