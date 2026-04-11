@@ -24,6 +24,14 @@ final class ChatViewModel {
     var errorMessage: String? = nil
     var toolDemoOutput: String = ""
 
+    // MARK: – Compare state
+    var combineOpenAIKey: String = ""
+    var combineAnthropicKey: String = ""
+    var combineGeminiKey: String = ""
+    var combinePrompt: String = ""
+    var combineResults: [(tag: String, result: Result<String, String>)] = []
+    var isCombineLoading: Bool = false
+
     var availableModels: [String] {
         switch selectedProvider {
         case .openAI:     return ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"]
@@ -110,6 +118,39 @@ final class ChatViewModel {
                 }
             } catch {
                 errorMessage = error.localizedDescription
+            }
+        }
+    }
+
+    func runCompare() {
+        guard !combinePrompt.isEmpty else { errorMessage = "Please enter a prompt."; return }
+        let keyed: [(key: String, tag: String, model: Model, config: ProviderConfig)] = [
+            (combineOpenAIKey,    "OpenAI",    .openAI(.gpt4oMini),        .openAI(key: combineOpenAIKey)),
+            (combineAnthropicKey, "Anthropic", .anthropic(.claudeSonnet46), .anthropic(key: combineAnthropicKey)),
+            (combineGeminiKey,    "Gemini",    .gemini(.gemini20Flash),     .gemini(key: combineGeminiKey)),
+        ].filter { !$0.key.isEmpty }
+
+        guard !keyed.isEmpty else { errorMessage = "Enter at least one API key."; return }
+        errorMessage = nil
+        isCombineLoading = true
+        combineResults = []
+
+        Task {
+            defer { isCombineLoading = false }
+            let sdk = TALLMKit()
+            for slot in keyed { sdk.configure(slot.config) }
+            let requests = keyed.map { slot in
+                CombineRequest(tag: slot.tag, message: combinePrompt, model: slot.model)
+            }
+            let multi = await sdk.combine(requests)
+
+            // Preserve insertion order (same as keyed array)
+            combineResults = keyed.map { slot in
+                switch multi[slot.tag] {
+                case .success(let r): return (slot.tag, .success(r.text))
+                case .failure(let e): return (slot.tag, .failure(e.localizedDescription))
+                case nil:             return (slot.tag, .failure("No result"))
+                }
             }
         }
     }

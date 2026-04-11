@@ -10,6 +10,8 @@ struct ContentView: View {
                 .tabItem { Label("Chat", systemImage: "bubble.left.and.bubble.right") }
             ToolDemoTab(viewModel: viewModel)
                 .tabItem { Label("Tool Demo", systemImage: "wrench.and.screwdriver") }
+            CompareTab(viewModel: viewModel)
+                .tabItem { Label("Compare", systemImage: "rectangle.split.3x1") }
         }
     }
 }
@@ -133,6 +135,77 @@ struct ToolDemoTab: View {
                 }
             }
             .navigationTitle("Tool Demo")
+        }
+    }
+}
+
+// MARK: – Compare Tab
+
+struct CompareTab: View {
+    @Bindable var viewModel: ChatViewModel
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("API Keys (enter one or more)") {
+                    SecureField("OpenAI key (sk-...)", text: $viewModel.combineOpenAIKey)
+                        .textContentType(.password)
+                        .autocorrectionDisabled()
+                    SecureField("Anthropic key (sk-ant-...)", text: $viewModel.combineAnthropicKey)
+                        .textContentType(.password)
+                        .autocorrectionDisabled()
+                    SecureField("Gemini key (AIza...)", text: $viewModel.combineGeminiKey)
+                        .textContentType(.password)
+                        .autocorrectionDisabled()
+                }
+
+                Section("Prompt") {
+                    TextField("Ask all providers the same question…", text: $viewModel.combinePrompt, axis: .vertical)
+                        .lineLimit(3...6)
+                    Button(action: viewModel.runCompare) {
+                        if viewModel.isCombineLoading {
+                            ProgressView().frame(maxWidth: .infinity)
+                        } else {
+                            Label("Compare Providers", systemImage: "arrow.triangle.branch")
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
+                    .disabled(viewModel.isCombineLoading)
+                    .buttonStyle(.borderedProminent)
+                }
+
+                if !viewModel.combineResults.isEmpty {
+                    ForEach(viewModel.combineResults, id: \.tag) { entry in
+                        Section {
+                            switch entry.result {
+                            case .success(let text):
+                                Text(text)
+                                    .textSelection(.enabled)
+                            case .failure(let message):
+                                Label(message, systemImage: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.red)
+                                    .font(.callout)
+                            }
+                        } header: {
+                            HStack(spacing: 4) {
+                                if case .success = entry.result {
+                                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                                } else {
+                                    Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
+                                }
+                                Text(entry.tag)
+                            }
+                        }
+                    }
+                }
+
+                if let error = viewModel.errorMessage {
+                    Section {
+                        Text(error).foregroundStyle(.red)
+                    }
+                }
+            }
+            .navigationTitle("Compare Providers")
         }
     }
 }
