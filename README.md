@@ -71,7 +71,7 @@ targets: [
 ]
 ```
 
-Or add it in **Xcode**: `File → Add Package Dependencies` and paste the repo URL.
+Or in **Xcode**: `File → Add Package Dependencies` and paste the repo URL.
 
 ---
 
@@ -87,23 +87,7 @@ let response = try await sdk.send("What is the Swift concurrency model?", model:
 print(response.text)
 ```
 
-That's it. Configure once, send anywhere.
-
----
-
-## Quick Start
-
-```swift
-import TALLMKit
-
-let sdk = TALLMKit()
-sdk.configure(.openAI(key: "sk-..."))
-
-let response = try await sdk.send("What is the Swift concurrency model?", model: .openAI(.gpt4oMini))
-print(response.text)
-```
-
-That's it. Configure once, send anywhere.
+Configure once, send anywhere.
 
 ---
 
@@ -117,7 +101,7 @@ That's it. Configure once, send anywhere.
 .openAI(.gpt4oMini)   // GPT-4o Mini — fast, affordable
 .openAI(.gpt4o)        // GPT-4o — flagship multimodal
 .openAI(.gpt4Turbo)    // GPT-4 Turbo — 128k context
-.openAI(.gpt35Turbo)   // GPT-3.5 Turbo — legacy fast
+.openAI(.gpt35Turbo)   // GPT-3.5 Turbo
 
 // Anthropic
 .anthropic(.claudeOpus46)    // Most capable
@@ -127,7 +111,6 @@ That's it. Configure once, send anywhere.
 // Grok (xAI)
 .grok(.grok3)      // Flagship
 .grok(.grok3Mini)  // Lightweight
-.grok(.grok2)      // Previous gen
 
 // Gemini
 .gemini(.gemini20Flash)  // Latest fast multimodal
@@ -137,12 +120,11 @@ That's it. Configure once, send anywhere.
 
 </details>
 
+---
+
 ### Configure providers
 
-Register one or more providers at startup. Calling `configure` again with the same provider replaces it.
-
 ```swift
-let sdk = TALLMKit()
 sdk.configure(
     .openAI(key: "sk-..."),
     .anthropic(key: "sk-ant-..."),
@@ -151,45 +133,48 @@ sdk.configure(
 )
 ```
 
+> Calling `configure` again with the same provider type replaces it — useful for switching API keys at runtime.
+
 ---
 
 ### Single message
 
 ```swift
-let response = try await sdk.send("Summarize quantum computing in one sentence.", model: .openAI(.gpt4oMini))
+let response = try await sdk.send("Explain Swift actors in one sentence.", model: .openAI(.gpt4oMini))
 print(response.text)
 ```
+
+---
 
 ### Multi-turn conversation
 
 ```swift
 var history: [Message] = [
     .system("You are a helpful Swift tutor."),
-    .user("What is an actor in Swift?"),
-    .assistant("An actor is a reference type that protects its mutable state from data races..."),
-    .user("Can actors be subclassed?")
+    .user("What is an actor?"),
+    .assistant("An actor protects mutable state from data races..."),
+    .user("Can they be subclassed?")
 ]
 
 let response = try await sdk.chat(.anthropic(.claudeSonnet46), messages: history)
 history.append(.assistant(response.text))
 ```
 
+---
+
 ### Request parameters
 
 ```swift
-let params = RequestParameters(
-    temperature: 0.3,
-    maxTokens: 256,
-    systemPrompt: "You are a concise technical writer."
-)
-let response = try await sdk.send("Explain Result type in Swift.", model: .openAI(.gpt4o), parameters: params)
+let params = RequestParameters(temperature: 0.2, maxTokens: 256, systemPrompt: "Be concise.")
+let response = try await sdk.send("What is a Result type?", model: .openAI(.gpt4o), parameters: params)
 ```
+
+---
 
 ### Token usage
 
 ```swift
 let response = try await sdk.send("Write a haiku about Swift.", model: .anthropic(.claudeHaiku45))
-
 if let usage = response.usage {
     print("↑ \(usage.inputTokens)  ↓ \(usage.outputTokens)  total \(usage.totalTokens)")
 }
@@ -199,73 +184,47 @@ if let usage = response.usage {
 
 ### Concurrent multi-provider requests
 
-Send the same (or different) prompt to multiple providers simultaneously. Every slot resolves independently — one failure never blocks the others.
+Send a prompt to multiple providers simultaneously. Every slot resolves independently — one failure never blocks the others.
 
 ```swift
-sdk.configure(
-    .openAI(key: "sk-..."),
-    .anthropic(key: "sk-ant-..."),
-    .gemini(key: "AIza...")
-)
-
 let multi = await sdk.combine([
-    CombineRequest(tag: "openai",    message: "Explain async/await", model: .openAI(.gpt4oMini)),
-    CombineRequest(tag: "anthropic", message: "Explain async/await", model: .anthropic(.claudeSonnet46)),
-    CombineRequest(tag: "gemini",    message: "Explain async/await", model: .gemini(.gemini20Flash)),
+    CombineRequest(tag: "openai",    message: "Best Swift feature?", model: .openAI(.gpt4oMini)),
+    CombineRequest(tag: "anthropic", message: "Best Swift feature?", model: .anthropic(.claudeSonnet46)),
+    CombineRequest(tag: "gemini",    message: "Best Swift feature?", model: .gemini(.gemini20Flash)),
 ])
 
-// All successes
 for (tag, response) in multi.successes {
     print("\(tag): \(response.text)")
 }
 
-// A specific result
-switch multi["anthropic"] {
-case .success(let r): print(r.text)
-case .failure(let e): print("Failed:", e)
-case nil: break
+// Check failures
+for (tag, error) in multi.failures {
+    print("\(tag) failed: \(error)")
 }
-```
-
-Each slot can carry its own `RequestParameters`:
-
-```swift
-let multi = await sdk.combine([
-    CombineRequest(tag: "fast",     message: "Summarize this", model: .openAI(.gpt4oMini),
-                   parameters: RequestParameters(temperature: 0.0, maxTokens: 128)),
-    CombineRequest(tag: "thorough", message: "Summarize this", model: .anthropic(.claudeOpus46),
-                   parameters: RequestParameters(temperature: 0.7, maxTokens: 1024)),
-])
 ```
 
 ---
 
 ### Tool calling
 
+Define a tool, attach it to a request, and handle the model's call:
+
 ```swift
-let weatherTool = Tool(
-    name: "get_weather",
-    description: "Get current temperature for a city",
-    parameters: .object(
-        properties: ["city": .string, "unit": .optional(.enum(["C", "F"]))],
-        required: ["city"]
-    )
-)
-
 var params = RequestParameters()
-params.tools = [weatherTool]
+params.tools = [
+    Tool(name: "get_weather", description: "Get temperature for a city",
+         parameters: .object(properties: ["city": .string], required: ["city"]))
+]
 
-let response = try await sdk.send("What's the weather in Paris?",
-                                   model: .openAI(.gpt4oMini),
-                                   parameters: params)
+let first = try await sdk.send("Weather in Tokyo?", model: .openAI(.gpt4oMini), parameters: params)
 
-if let calls = response.toolCalls, let call = calls.first {
-    let result = try await sdk.chat(.openAI(.gpt4oMini), messages: [
-        .user("What's the weather in Paris?"),
-        .assistant(from: response),
-        .toolResult(toolCallId: call.id, content: "{\"temp\": 22, \"unit\": \"C\"}")
+if let call = first.toolCalls?.first {
+    let final = try await sdk.chat(.openAI(.gpt4oMini), messages: [
+        .user("Weather in Tokyo?"),
+        .assistant(from: first),
+        .toolResult(toolCallId: call.id, content: #"{"temp": 18, "unit": "C"}"#)
     ])
-    print(result.text)
+    print(final.text)
 }
 ```
 
@@ -274,21 +233,14 @@ if let calls = response.toolCalls, let call = calls.first {
 ### Typed JSON decoding
 
 ```swift
-struct WeatherInfo: Decodable, Sendable {
-    let city: String
-    let temperature: Double
-    let condition: String
-}
+struct Movie: Decodable, Sendable { let title: String; let year: Int; let genre: String }
 
 let result = try await sdk.send(
-    "Give me Paris weather as JSON",
+    "Give me a classic Sci-Fi movie as JSON",
     model: .openAI(.gpt4oMini),
-    decoding: WeatherInfo.self
+    decoding: Movie.self
 )
-
-print(result.value.city)         // "Paris"
-print(result.value.temperature)  // 22.0
-print(result.usage?.totalTokens) // Optional<Int>
+print("\(result.value.title) (\(result.value.year))")  // "Blade Runner (1982)"
 ```
 
 ---
@@ -299,16 +251,14 @@ print(result.usage?.totalTokens) // Optional<Int>
 do {
     let response = try await sdk.send("Hello", model: .openAI(.gpt4oMini))
     print(response.text)
-} catch AIError.providerNotConfigured {
-    print("Call sdk.configure(...) before sending.")
 } catch AIError.invalidAPIKey {
-    print("Invalid API key.")
+    // bad or missing key
 } catch AIError.rateLimited(let retryAfter) {
-    print("Rate limited. Retry after \(retryAfter ?? 0)s.")
-} catch AIError.httpError(let status, let body) {
-    print("HTTP \(status): \(body)")
-} catch AIError.networkError(let error) {
-    print("Network error: \(error.localizedDescription)")
+    // back off and retry
+} catch AIError.providerNotConfigured {
+    // call sdk.configure(...) first
+} catch AIError.httpError(let status, _) {
+    // non-2xx from the provider
 }
 ```
 
@@ -316,28 +266,21 @@ do {
 
 ## Example App
 
-A runnable SwiftUI app lives in `Examples/TALLMKitExample/`. It demonstrates every feature of the SDK across three tabs:
+A runnable SwiftUI app lives in `Examples/TALLMKitExample/`. Three tabs, every feature covered:
 
 | Tab | What it shows |
 |-----|---------------|
-| **Chat** | Single message send with any configured provider and model |
-| **Tool Demo** | Live tool calling round-trip with a simulated weather function |
-| **Compare** | `sdk.combine()` — fire the same prompt at OpenAI, Anthropic, and Gemini side by side |
+| **Chat** | Single message send with any configured provider |
+| **Tool Demo** | Live tool calling round-trip |
+| **Compare** | `sdk.combine()` — same prompt, all providers, side by side |
 
-**To run:**
-
-1. Open `Examples/TALLMKitExample/TALLMKitExample.xcodeproj` in Xcode
-2. Select an iOS simulator (iOS 17+)
-3. Press `⌘R`
-4. Enter your API key(s) and start experimenting
-
-The app references TALLMKit as a local Swift package — no additional setup required.
+Open `Examples/TALLMKitExample/TALLMKitExample.xcodeproj` in Xcode, select a simulator, press `⌘R`.
 
 ---
 
 ## Contributing
 
-Pull requests are welcome. For major changes, open an issue first to discuss what you'd like to change.
+Pull requests are welcome. For major changes, open an issue first.
 
 ---
 
@@ -346,4 +289,3 @@ Pull requests are welcome. For major changes, open an issue first to discuss wha
 Made with ❤️ by [TerraceApps](https://github.com/TerraceApps)
 
 </div>
-
