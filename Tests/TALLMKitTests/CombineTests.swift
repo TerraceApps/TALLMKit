@@ -48,6 +48,13 @@ struct MultiResponseTests {
             Issue.record("Expected AIError.invalidAPIKey for key 'b'")
             return
         }
+        // Also confirm the failures computed property surfaces the same error
+        guard let failureError = multi.failures["b"],
+              let failureAIError = failureError as? AIError,
+              case .invalidAPIKey = failureAIError else {
+            Issue.record("Expected AIError.invalidAPIKey in multi.failures for key 'b'")
+            return
+        }
     }
 
     @Test("successes is empty when all failed")

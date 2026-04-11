@@ -17,16 +17,21 @@
 /// for (tag, response) in multi.successes { print("\(tag): \(response.text)") }
 /// for (tag, error) in multi.failures    { print("\(tag): \(error)") }
 /// ```
-public struct MultiResponse: Sendable {
+///
+/// `@unchecked Sendable`: `Result<AIResponse, Error>` cannot be statically proven `Sendable`
+/// because `Error` is not unconditionally `Sendable` in Swift 6. In practice, all errors
+/// produced by `TALLMKit.combine` are `Sendable` (`AIError`, `URLError`, etc.).
+/// This mirrors the pattern used by `TALLMKit` itself.
+public struct MultiResponse: @unchecked Sendable {
     /// The raw results dictionary. Every tag from the input `[CombineRequest]` is present.
-    public let results: [String: Result<AIResponse, any Error & Sendable>]
+    public let results: [String: Result<AIResponse, Error>]
 
-    public init(results: [String: Result<AIResponse, any Error & Sendable>]) {
+    public init(results: [String: Result<AIResponse, Error>]) {
         self.results = results
     }
 
     /// Returns the result for `tag`, or `nil` if no request had that tag.
-    public subscript(tag: String) -> Result<AIResponse, any Error & Sendable>? {
+    public subscript(tag: String) -> Result<AIResponse, Error>? {
         results[tag]
     }
 
@@ -36,7 +41,7 @@ public struct MultiResponse: Sendable {
     }
 
     /// All failed results, keyed by tag.
-    public var failures: [String: any Error & Sendable] {
+    public var failures: [String: Error] {
         results.compactMapValues { result in
             if case .failure(let e) = result { return e }
             return nil
