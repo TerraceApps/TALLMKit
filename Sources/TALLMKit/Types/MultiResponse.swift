@@ -17,16 +17,16 @@
 /// for (tag, response) in multi.successes { print("\(tag): \(response.text)") }
 /// for (tag, error) in multi.failures    { print("\(tag): \(error)") }
 /// ```
-public struct MultiResponse: @unchecked Sendable {
+public struct MultiResponse: Sendable {
     /// The raw results dictionary. Every tag from the input `[CombineRequest]` is present.
-    public let results: [String: Result<AIResponse, Error>]
+    public let results: [String: Result<AIResponse, any Error & Sendable>]
 
-    public init(results: [String: Result<AIResponse, Error>]) {
+    public init(results: [String: Result<AIResponse, any Error & Sendable>]) {
         self.results = results
     }
 
     /// Returns the result for `tag`, or `nil` if no request had that tag.
-    public subscript(tag: String) -> Result<AIResponse, Error>? {
+    public subscript(tag: String) -> Result<AIResponse, any Error & Sendable>? {
         results[tag]
     }
 
@@ -36,7 +36,7 @@ public struct MultiResponse: @unchecked Sendable {
     }
 
     /// All failed results, keyed by tag.
-    public var failures: [String: Error] {
+    public var failures: [String: any Error & Sendable] {
         results.compactMapValues { result in
             if case .failure(let e) = result { return e }
             return nil

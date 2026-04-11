@@ -42,7 +42,12 @@ struct MultiResponseTests {
             "b": .failure(AIError.invalidAPIKey)
         ])
         #expect(multi.failures.count == 1)
-        #expect(multi.failures["b"] != nil)
+        guard case .failure(let error) = multi["b"],
+              let aiError = error as? AIError,
+              case .invalidAPIKey = aiError else {
+            Issue.record("Expected AIError.invalidAPIKey for key 'b'")
+            return
+        }
     }
 
     @Test("successes is empty when all failed")
