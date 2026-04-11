@@ -92,6 +92,34 @@ That's it. Configure once, send anywhere.
 
 ## Usage
 
+<details>
+<summary><strong>All available models</strong></summary>
+
+```swift
+// OpenAI
+.openAI(.gpt4oMini)   // GPT-4o Mini — fast, affordable
+.openAI(.gpt4o)        // GPT-4o — flagship multimodal
+.openAI(.gpt4Turbo)    // GPT-4 Turbo — 128k context
+.openAI(.gpt35Turbo)   // GPT-3.5 Turbo — legacy fast
+
+// Anthropic
+.anthropic(.claudeOpus46)    // Most capable
+.anthropic(.claudeSonnet46)  // Balanced
+.anthropic(.claudeHaiku45)   // Fastest
+
+// Grok (xAI)
+.grok(.grok3)      // Flagship
+.grok(.grok3Mini)  // Lightweight
+.grok(.grok2)      // Previous gen
+
+// Gemini
+.gemini(.gemini20Flash)  // Latest fast multimodal
+.gemini(.gemini15Pro)    // Long context (2M tokens)
+.gemini(.gemini15Flash)  // Fast and efficient
+```
+
+</details>
+
 ### Configure providers
 
 Register one or more providers at startup. Calling `configure` again with the same provider replaces it.
