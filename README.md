@@ -90,6 +90,22 @@ That's it. Configure once, send anywhere.
 
 ---
 
+## Quick Start
+
+```swift
+import TALLMKit
+
+let sdk = TALLMKit()
+sdk.configure(.openAI(key: "sk-..."))
+
+let response = try await sdk.send("What is the Swift concurrency model?", model: .openAI(.gpt4oMini))
+print(response.text)
+```
+
+That's it. Configure once, send anywhere.
+
+---
+
 ## Usage
 
 <details>
@@ -132,6 +148,50 @@ sdk.configure(
     .grok(key: "xai-..."),
     .gemini(key: "AIza...")
 )
+```
+
+---
+
+### Single message
+
+```swift
+let response = try await sdk.send("Summarize quantum computing in one sentence.", model: .openAI(.gpt4oMini))
+print(response.text)
+```
+
+### Multi-turn conversation
+
+```swift
+var history: [Message] = [
+    .system("You are a helpful Swift tutor."),
+    .user("What is an actor in Swift?"),
+    .assistant("An actor is a reference type that protects its mutable state from data races..."),
+    .user("Can actors be subclassed?")
+]
+
+let response = try await sdk.chat(.anthropic(.claudeSonnet46), messages: history)
+history.append(.assistant(response.text))
+```
+
+### Request parameters
+
+```swift
+let params = RequestParameters(
+    temperature: 0.3,
+    maxTokens: 256,
+    systemPrompt: "You are a concise technical writer."
+)
+let response = try await sdk.send("Explain Result type in Swift.", model: .openAI(.gpt4o), parameters: params)
+```
+
+### Token usage
+
+```swift
+let response = try await sdk.send("Write a haiku about Swift.", model: .anthropic(.claudeHaiku45))
+
+if let usage = response.usage {
+    print("↑ \(usage.inputTokens)  ↓ \(usage.outputTokens)  total \(usage.totalTokens)")
+}
 ```
 
 ---
