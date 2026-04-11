@@ -29,7 +29,7 @@ final class ChatViewModel {
     var combineAnthropicKey: String = ""
     var combineGeminiKey: String = ""
     var combinePrompt: String = ""
-    var combineResults: [(tag: String, result: Result<String, String>)] = []
+    var combineResults: [(tag: String, text: String?, errorMessage: String?)] = []
     var isCombineLoading: Bool = false
 
     var availableModels: [String] {
@@ -146,13 +146,11 @@ final class ChatViewModel {
 
             // Preserve insertion order (same as keyed array)
             combineResults = keyed.map { slot in
-                let result: Result<String, String>
                 switch multi[slot.tag] {
-                case .success(let r): result = .success(r.text)
-                case .failure(let e): result = .failure(e.localizedDescription)
-                case nil:             result = .failure("No result")
+                case .success(let r): return (slot.tag, r.text, nil)
+                case .failure(let e): return (slot.tag, nil, e.localizedDescription)
+                case nil:             return (slot.tag, nil, "No result")
                 }
-                return (slot.tag, result)
             }
         }
     }

@@ -177,22 +177,17 @@ struct CompareTab: View {
                 if !viewModel.combineResults.isEmpty {
                     ForEach(viewModel.combineResults, id: \.tag) { entry in
                         Section {
-                            switch entry.result {
-                            case .success(let text):
-                                Text(text)
-                                    .textSelection(.enabled)
-                            case .failure(let message):
+                            if let text = entry.text {
+                                Text(text).textSelection(.enabled)
+                            } else if let message = entry.errorMessage {
                                 Label(message, systemImage: "exclamationmark.triangle.fill")
                                     .foregroundStyle(.red)
                                     .font(.callout)
                             }
                         } header: {
                             HStack(spacing: 4) {
-                                if case .success = entry.result {
-                                    Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                                } else {
-                                    Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
-                                }
+                                Image(systemName: entry.text != nil ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundStyle(entry.text != nil ? .green : .red)
                                 Text(entry.tag)
                             }
                         }
