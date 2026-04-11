@@ -140,7 +140,62 @@ if let calls = response.toolCalls {
 }
 ```
 
-### 8. Typed JSON decoding
+### 8. Concurrent multi-provider requests
+
+Send different prompts to different providers at the same time and get all results back in one call. Each slot either succeeds or fails independently — the call itself never throws.
+
+```swift
+let sdk = TALLMKit()
+sdk.configure(
+    .openAI(key: "sk-..."),
+    .anthropic(key: "sk-ant-..."),
+    .gemini(key: "AIza...")
+)
+
+let multi = await sdk.combine([
+    CombineRequest(tag: "openai",  message: "Explain async/await in Swift", model: .openAI(.gpt4oMini)),
+    CombineRequest(tag: "claude",  message: "Explain async/await in Swift", model: .anthropic(.claudeSonnet46)),
+    CombineRequest(tag: "gemini",  message: "Explain async/await in Swift", model: .gemini(.gemini20Flash)),
+])
+
+// All successes
+for (tag, response) in multi.successes {
+    print("\(tag): \(response.text)")
+}
+
+// Inspect a specific result
+switch multi["claude"] {
+case .success(let response): print(response.text)
+case .failure(let error):    print("Claude failed:", error)
+case nil:                    break
+}
+
+// Any failures
+for (tag, error) in multi.failures {
+    print("\(tag) failed:", error)
+}
+```
+
+Each `CombineRequest` can carry its own `RequestParameters` (temperature, system prompt, tools, etc.):
+
+```swift
+let multi = await sdk.combine([
+    CombineRequest(
+        tag: "fast",
+        message: "Summarize this",
+        model: .openAI(.gpt4oMini),
+        parameters: RequestParameters(temperature: 0.0, maxTokens: 128)
+    ),
+    CombineRequest(
+        tag: "thorough",
+        message: "Summarize this with detail",
+        model: .anthropic(.claudeOpus46),
+        parameters: RequestParameters(temperature: 0.7, maxTokens: 1024)
+    ),
+])
+```
+
+### 9. Typed JSON decoding
 
 ```swift
 struct WeatherInfo: Decodable, Sendable {
