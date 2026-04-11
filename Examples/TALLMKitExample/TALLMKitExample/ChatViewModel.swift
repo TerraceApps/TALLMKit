@@ -146,11 +146,13 @@ final class ChatViewModel {
 
             // Preserve insertion order (same as keyed array)
             combineResults = keyed.map { slot in
+                let result: Result<String, String>
                 switch multi[slot.tag] {
-                case .success(let r): return (slot.tag, .success(r.text))
-                case .failure(let e): return (slot.tag, .failure(e.localizedDescription))
-                case nil:             return (slot.tag, .failure("No result"))
+                case .success(let r): result = .success(r.text)
+                case .failure(let e): result = .failure(e.localizedDescription)
+                case nil:             result = .failure("No result")
                 }
+                return (slot.tag, result)
             }
         }
     }
